@@ -1,0 +1,116 @@
+FootHeight = 10
+
+FbxObjHandle = undefined
+FbxObjName = def_spine_cog
+BipObjHandle = undefined
+BipObjName = Bip001 
+
+FbxObjHandle = undefined
+FbxObjName = def_spine_hips
+BipObjHandle = undefined
+BipObjName = Bip001 Pelvis
+
+FbxObjHandle = undefined
+FbxObjName = def_spine_0
+BipObjHandle = undefined
+BipObjName = Bip001 Spine
+
+FbxObjHandle = undefined
+FbxObjName = def_spine_1
+BipObjHandle = undefined
+BipObjName = Bip001 Spine1
+
+FbxObjHandle = undefined
+FbxObjName = def_spine_chest
+BipObjHandle = undefined
+BipObjName = Bip001 Spine2
+
+FbxObjHandle = undefined
+FbxObjName = def_head_neck
+BipObjHandle = undefined
+BipObjName = Bip001 Neck
+
+FbxObjHandle = undefined
+FbxObjName = def_head
+BipObjHandle = undefined
+BipObjName = Bip001 Head
+
+FbxObjHandle = undefined
+FbxObjName = def_L_leg_up
+BipObjHandle = undefined
+BipObjName = Bip001 L Thigh
+
+FbxObjHandle = undefined
+FbxObjName = def_L_leg_mid
+BipObjHandle = undefined
+BipObjName = Bip001 L Calf
+
+FbxObjHandle = undefined
+FbxObjName = def_L_foot_base
+BipObjHandle = undefined
+BipObjName = Bip001 L Foot
+
+FbxObjHandle = undefined
+FbxObjName = def_L_toe_0
+BipObjHandle = undefined
+BipObjName = Bip001 L Toe0
+
+FbxObjHandle = undefined
+FbxObjName = def_R_leg_up
+BipObjHandle = undefined
+BipObjName = Bip001 R Thigh
+
+FbxObjHandle = undefined
+FbxObjName = def_R_leg_mid
+BipObjHandle = undefined
+BipObjName = Bip001 R Calf
+
+FbxObjHandle = undefined
+FbxObjName = def_R_foot_base
+BipObjHandle = undefined
+BipObjName = Bip001 R Foot
+
+FbxObjHandle = undefined
+FbxObjName = def_R_toe_0
+BipObjHandle = undefined
+BipObjName = Bip001 R Toe0
+
+FbxObjHandle = undefined
+FbxObjName = def_L_clavicle_0
+BipObjHandle = undefined
+BipObjName = Bip001 L Clavicle
+
+FbxObjHandle = undefined
+FbxObjName = def_L_arm_up
+BipObjHandle = undefined
+BipObjName = Bip001 L UpperArm
+
+FbxObjHandle = undefined
+FbxObjName = def_L_arm_mid
+BipObjHandle = undefined
+BipObjName = Bip001 L Forearm
+
+FbxObjHandle = undefined
+FbxObjName = def_L_arm_down
+BipObjHandle = undefined
+BipObjName = Bip001 L Hand
+
+FbxObjHandle = undefined
+FbxObjName = def_L_clavicle_0
+BipObjHandle = undefined
+BipObjName = Bip001 R Clavicle
+
+FbxObjHandle = undefined
+FbxObjName = def_R_arm_up
+BipObjHandle = undefined
+BipObjName = Bip001 R UpperArm
+
+FbxObjHandle = undefined
+FbxObjName = def_R_arm_mid
+BipObjHandle = undefined
+BipObjName = Bip001 R Forearm
+
+FbxObjHandle = undefined
+FbxObjName = def_R_arm_down
+BipObjHandle = undefined
+BipObjName = Bip001 R Hand
