@@ -1730,14 +1730,33 @@ rollout KenzorsCrudeKeyReducerRoll "Reduce Biped animation"
 
 
 
-function MakerolloutFloat = 
+fn MakerolloutFloat =
 (
-	if(is64bitApplication())then(
-		dotnet.loadAssembly (GetDir #maxroot + "\\Scripts\\Bippy/GTools64Bippy.dll")
-	)else(
-		dotnet.loadAssembly (GetDir #maxroot + "\\Scripts\\Bippy/GTools32Bippy.dll")
-	)
-	FBX_convert_str.progbar = dotnetobject "GTools.progBar"  
+    local dllPath = undefined
+
+    if is64bitApplication() then
+        dllPath = pathConfig.appendPath (GetDir #maxroot) @"Scripts\Bippy\GTools64Bippy.dll"
+    else
+        dllPath = pathConfig.appendPath (GetDir #maxroot) @"Scripts\Bippy\GTools32Bippy.dll"
+
+    if not doesFileExist dllPath then
+    (
+        messagebox ("DLL not found:\n" + dllPath)
+        return false
+    )
+
+    try
+    (
+        dotnet.loadAssembly dllPath
+    )
+    catch
+    (
+        messagebox ("Failed to load DLL:\n" + dllPath)
+        return false
+    )
+
+    FBX_convert_str.progbar = dotnetobject "GTools.progBar"
+)
 
 
 	
