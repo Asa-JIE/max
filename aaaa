@@ -1,0 +1,683 @@
+# BIPPY 中 Bip 数据如何从 FBX 得到
+
+# 1. 核心数据来源
+
+BIPPY 中主要有两个数组：
+
+```maxscript
+FBX_convert_str.FBX_array
+FBX_convert_str.retarget_array
+```
+
+含义：
+
+```text
+FBX_array        = FBX 骨骼
+retarget_array   = 对应的 Bip 骨骼
+```
+
+示例：
+
+```text
+FBX_array[89]        = def_L_clavicle_0
+retarget_array[89]   = Bip003 L Clavicle
+```
+
+---
+
+# 2. Bip 从 FBX 获取的数据
+
+Bip 从 FBX 获取的数据主要有：
+
+```text
+1. 骨骼是否存在
+2. transform.pos
+3. transform.rotation
+4. distance(boneA, boneB)
+5. parent / child
+6. limb plane（肩-肘-腕 / 髋-膝-踝）
+```
+
+---
+
+# 3. 总体执行顺序
+
+```text
+1. FBX_array 填入 FBX 骨骼
+2. assess_and_create_biped()
+3. resize_biped()
+4. 退出 Figure Mode
+5. Map_biped_to_FBX()
+```
+
+详细：
+
+```text
+FBX Bone
+    ↓
+统计骨骼数量
+    ↓
+创建 Bip 结构
+    ↓
+Figure Mode 重建 Bip 体型
+    ↓
+退出 Figure Mode
+    ↓
+逐帧 Bake 动画
+```
+
+---
+
+# 4. 创建 Bip 阶段
+
+函数：
+
+```maxscript
+assess_and_create_biped()
+```
+
+主要统计：
+
+```text
+spineLinks
+neckLinks
+legLinks
+fingerLinks
+toeLinks
+tailLinks
+ponytailLinks
+```
+
+源码：
+
+```maxscript
+biped.createNew bip_height 0 [0,0,0] \
+    spineLinks:number_of_spines \
+    legLinks:number_of_legs \
+    neckLinks:number_of_necks \
+    fingers:number_of_fingers \
+    toes:number_of_toes
+```
+
+这一阶段只决定：
+
+```text
+Bip 有几节 spine
+Bip 有几节 neck
+Bip 有几节 leg
+Bip 有几个 finger / toe
+```
+
+---
+
+# 5. Figure Mode 重建阶段
+
+函数：
+
+```maxscript
+resize_biped()
+```
+
+开始：
+
+```maxscript
+FBX_convert_str.biped_ctrl.figureMode = true
+```
+
+处理顺序：
+
+```text
+1. Root
+2. Pelvis
+3. Spine
+4. Neck
+5. Ponytail
+6. Left Arm
+7. Right Arm
+8. Left Leg
+9. Right Leg
+10. 全骨骼 pos / rotation
+11. Exit Figure Mode
+```
+
+---
+
+# 6. Root / Pelvis
+
+数据来源：
+
+```text
+FBX_array[1]
+FBX_array[2]
+```
+
+处理：
+
+```maxscript
+biped.setTransform retarget_array[1] #pos \
+    FBX_array[1].transform.pos True
+
+biped.setTransform retarget_array[1] #rotation \
+    FBX_array[1].transform.rotation True
+```
+
+Pelvis Scale：
+
+```maxscript
+temp = distance FBX_array[2] FBX_array[137] * 2
+
+biped.setTransform retarget_array[2] \
+    #scale [temp,temp,temp] True
+```
+
+---
+
+# 7. Spine
+
+范围：
+
+```text
+FBX_array[3]  - FBX_array[12]
+```
+
+对应：
+
+```text
+Spine
+Spine1
+Spine2
+...
+```
+
+统计：
+
+```maxscript
+for c = 3 to 12 do
+(
+    if FBX_array[c] != undefined do
+        number_of_spines += 1
+)
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 10 do
+(
+    if FBX_array[i+2] != undefined do
+    (
+        if FBX_array[i+3] != undefined then
+            temp = distance FBX_array[i+2] FBX_array[i+3]
+        else
+            temp = distance FBX_array[i+2] FBX_array[13]
+
+        biped.setTransform retarget_array[i+2] \
+            #scale [temp,temp,temp] True
+    )
+)
+```
+
+Spine 需要处理的数据：
+
+```text
+1. spineLinks 数量
+2. spine bone 长度
+3. spine transform.pos
+4. spine transform.rotation
+```
+
+---
+
+# 8. Neck
+
+范围：
+
+```text
+FBX_array[13] - FBX_array[37]
+```
+
+统计：
+
+```maxscript
+for c = 13 to 37 do
+(
+    if FBX_array[c] != undefined do
+        number_of_necks += 1
+)
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 25 do
+(
+    if FBX_array[i+12] != undefined do
+    (
+        if FBX_array[i+13] != undefined then
+            temp = distance FBX_array[i+12] FBX_array[i+13]
+        else
+            temp = distance FBX_array[i+12] FBX_array[38]
+
+        biped.setTransform retarget_array[i+12] \
+            #scale [temp,temp,temp] True
+    )
+)
+```
+
+Neck 需要处理的数据：
+
+```text
+1. neckLinks 数量
+2. neck bone 长度
+3. neck transform.pos
+4. neck transform.rotation
+```
+
+---
+
+# 9. Left Arm
+
+范围：
+
+```text
+FBX_array[89] = Left Clavicle
+FBX_array[90] = Left UpperArm
+FBX_array[91] = Left Forearm
+FBX_array[92] = Left Hand
+FBX_array[93] = Left Finger Root
+```
+
+当前映射：
+
+```text
+def_L_clavicle_0 -> Bip003 L Clavicle
+def_L_arm_up     -> Bip003 L UpperArm
+def_L_arm_mid    -> Bip003 L Forearm
+def_L_arm_down   -> Bip003 L Hand
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 3 do
+(
+    temp = distance FBX_array[i+88] FBX_array[i+89]
+
+    biped.setTransform retarget_array[i+88] \
+        #scale [temp,temp,temp] True
+)
+```
+
+对应：
+
+```text
+89 -> 90 : clavicle 长度
+90 -> 91 : upperarm 长度
+91 -> 92 : forearm 长度
+```
+
+Hand 长度：
+
+```maxscript
+if FBX_array[93] != undefined do
+(
+    temp = distance FBX_array[92] FBX_array[93]
+
+    biped.setTransform retarget_array[92] \
+        #scale [temp,temp,temp] True
+)
+```
+
+Left Arm 需要处理的数据：
+
+```text
+1. clavicle -> upperarm 向量
+2. upperarm -> forearm 向量
+3. forearm -> hand 向量
+4. shoulder / elbow / wrist limb plane
+5. transform.pos
+6. transform.rotation
+7. 左右镜像方向
+```
+
+注意：
+
+```text
+BIPPY 原版没有单独重建 Left Arm limb plane。
+所以普通 Bone rotation 直接给 Biped 左臂，
+容易导致 limb plane 翻转。
+```
+
+---
+
+# 10. Right Arm
+
+范围：
+
+```text
+FBX_array[113] = Right Clavicle
+FBX_array[114] = Right UpperArm
+FBX_array[115] = Right Forearm
+FBX_array[116] = Right Hand
+FBX_array[117] = Right Finger Root
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 3 do
+(
+    temp = distance FBX_array[i+112] FBX_array[i+113]
+
+    biped.setTransform retarget_array[i+112] \
+        #scale [temp,temp,temp] True
+)
+```
+
+对应：
+
+```text
+113 -> 114 : clavicle 长度
+114 -> 115 : upperarm 长度
+115 -> 116 : forearm 长度
+```
+
+Right Arm 需要处理的数据：
+
+```text
+1. clavicle -> upperarm 向量
+2. upperarm -> forearm 向量
+3. forearm -> hand 向量
+4. shoulder / elbow / wrist limb plane
+5. transform.pos
+6. transform.rotation
+7. 左右镜像方向
+```
+
+---
+
+# 11. Left Leg
+
+范围：
+
+```text
+FBX_array[137] = Left Thigh
+FBX_array[138] = Left Calf
+FBX_array[139] = Left Foot
+FBX_array[140] = Left Toe
+FBX_array[141] = Left Toe Root
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 3 do
+(
+    if FBX_array[i+136] != undefined do
+    (
+        if FBX_array[i+137] != undefined then
+            temp = distance FBX_array[i+136] FBX_array[i+137]
+        else
+            temp = distance FBX_array[i+136] FBX_array[i+138]
+
+        biped.setTransform retarget_array[i+136] \
+            #scale [temp,temp,temp] True
+    )
+)
+```
+
+对应：
+
+```text
+137 -> 138 : thigh 长度
+138 -> 139 : calf 长度
+139 -> 140 : foot 长度
+```
+
+Left Leg 需要处理的数据：
+
+```text
+1. thigh -> calf 向量
+2. calf -> foot 向量
+3. foot -> toe 向量
+4. hip / knee / ankle limb plane
+5. foot direction
+6. transform.pos
+7. transform.rotation
+```
+
+---
+
+# 12. Right Leg
+
+范围：
+
+```text
+FBX_array[156] = Right Thigh
+FBX_array[157] = Right Calf
+FBX_array[158] = Right Foot
+FBX_array[159] = Right Toe
+FBX_array[160] = Right Toe Root
+```
+
+长度重建：
+
+```maxscript
+for i = 1 to 3 do
+(
+    if FBX_array[i+155] != undefined do
+    (
+        if FBX_array[i+156] != undefined then
+            temp = distance FBX_array[i+155] FBX_array[i+156]
+        else
+            temp = distance FBX_array[i+155] FBX_array[i+157]
+
+        biped.setTransform retarget_array[i+155] \
+            #scale [temp,temp,temp] True
+    )
+)
+```
+
+对应：
+
+```text
+156 -> 157 : thigh 长度
+157 -> 158 : calf 长度
+158 -> 159 : foot 长度
+```
+
+Right Leg 需要处理的数据：
+
+```text
+1. thigh -> calf 向量
+2. calf -> foot 向量
+3. foot -> toe 向量
+4. hip / knee / ankle limb plane
+5. foot direction
+6. transform.pos
+7. transform.rotation
+```
+
+---
+
+# 13. 全骨骼统一 pos / rotation
+
+这是最关键阶段：
+
+```maxscript
+for b = 1 to local_number_of_items do
+(
+    biped.setTransform local_retarget_array[b] \
+        #pos local_fbx_array[b].transform.pos True
+
+    biped.setTransform local_retarget_array[b] \
+        #rotation local_fbx_array[b].transform.rotation True
+)
+```
+
+这里：
+
+```text
+Bip 位置 = FBX bone transform.pos
+Bip 旋转 = FBX bone transform.rotation
+```
+
+这一阶段影响：
+
+```text
+Spine
+Neck
+Left Arm
+Right Arm
+Left Leg
+Right Leg
+```
+
+你现在左臂问题，大概率发生在这里：
+
+```text
+Left Clavicle
+Left UpperArm
+Left Forearm
+```
+
+普通 Bone rotation 直接给 Biped 左 limb，
+导致 limb plane 翻转。
+
+---
+
+# 14. Animation Bake 阶段
+
+函数：
+
+```maxscript
+Map_biped_to_FBX()
+```
+
+执行顺序：
+
+```text
+1. assess_and_create_biped()
+2. resize_biped()
+3. Bake Animation
+```
+
+逐帧 Bake：
+
+```maxscript
+for t = start_int to stop_int do
+(
+    at time t
+    (
+        animate on
+        (
+            for b = 1 to local_number_of_items do
+            (
+                local_retarget_array[b].transform =
+                    local_fbx_array[b].transform
+            )
+        )
+    )
+)
+```
+
+动画阶段处理：
+
+```text
+每帧 transform
+每帧 pos
+每帧 rotation
+```
+
+动画阶段不应该处理：
+
+```text
+骨长
+scale
+spineLinks
+neckLinks
+limb plane 初始化
+```
+
+---
+
+# 15. 最终重建顺序
+
+完整顺序：
+
+```text
+FBX Bone
+    ↓
+统计骨骼数量
+    ↓
+Create Biped
+    ↓
+Figure Mode
+    ↓
+Root
+    ↓
+Spine
+    ↓
+Neck
+    ↓
+Left Arm
+    ↓
+Right Arm
+    ↓
+Left Leg
+    ↓
+Right Leg
+    ↓
+全骨骼 pos / rotation
+    ↓
+Exit Figure Mode
+    ↓
+Bake Animation
+```
+
+---
+
+# 16. 当前 Left Arm 问题总结
+
+当前 Left Arm 问题不是 mapping 错。
+
+当前 mapping：
+
+```text
+def_L_clavicle_0 -> Bip003 L Clavicle
+def_L_arm_up     -> Bip003 L UpperArm
+def_L_arm_mid    -> Bip003 L Forearm
+```
+
+已经正确。
+
+当前真正问题：
+
+```text
+Left Arm limb plane 翻转
+```
+
+问题位置：
+
+```text
+resize_biped()
+最后统一 rotation 阶段
+```
+
+重点需要额外处理的数据：
+
+```text
+1. shoulder -> elbow 向量
+2. elbow -> wrist 向量
+3. shoulder/elbow/wrist plane normal
+4. 左右镜像方向
+5. limb preferred angle
+```
+
+不是简单：
+
+```text
+rotation * 90
+```
+
+的问题。
