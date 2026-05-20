@@ -1,8 +1,0 @@
-name "Autobiptofbx"
-version 1.43
-treecopy "AutoFbxtoBip" to "D:\Program Files\Autodesk"
-run"AutoFbxtoBip v1.43.mse"
-drop "AutoFbxtoBip v1.43.mse"
-
-
-
