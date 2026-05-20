@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root name="customized">
+	<head LimbName="head" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 Head" objectName=" Head"/>
+	<neck LimbName="neck" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 Neck" objectName=" Neck"/>
+	<rarm LimbName="rarm" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 R Clavicle" objectName=" R Clavicle"/>
+	<larm LimbName="larm" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 L Clavicle" objectName=" L Clavicle"/>
+	<larm LimbName="larm" LinkIndex="2" control_object="" copy_type="0" customized_object="Bip001 L UpperArm" objectName=" L UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="2" control_object="" copy_type="0" customized_object="Bip001 R UpperArm" objectName=" R UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="3" control_object="" copy_type="0" customized_object="Bip001 R Forearm" objectName=" R Forearm"/>
+	<larm LimbName="larm" LinkIndex="3" control_object="" copy_type="0" customized_object="Bip001 L Forearm" objectName=" L Forearm"/>
+	<spine LimbName="spine" LinkIndex="3" control_object="" copy_type="0" customized_object="Bip001 Spine2" objectName=" Spine2"/>
+	<rarm LimbName="rarm" LinkIndex="4" control_object="" copy_type="0" customized_object="Bip001 R Hand" objectName=" R Hand"/>
+	<larm LimbName="larm" LinkIndex="4" control_object="" copy_type="0" customized_object="Bip001 L Hand" objectName=" L Hand"/>
+	<spine LimbName="spine" LinkIndex="2" control_object="" copy_type="0" customized_object="Bip001 Spine1" objectName=" Spine1"/>
+	<spine LimbName="spine" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 Spine" objectName=" Spine"/>
+	<pelvis LimbName="pelvis" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 Pelvis" objectName=" Pelvis"/>
+	<Body LimbName="Body" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001" objectName=" Body"/>
+	<rleg LimbName="rleg" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 R Thigh" objectName=" R Thigh"/>
+	<lleg LimbName="lleg" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 L Thigh" objectName=" L Thigh"/>
+	<rleg LimbName="rleg" LinkIndex="2" control_object="" copy_type="0" customized_object="Bip001 R Calf" objectName=" R Calf"/>
+	<lleg LimbName="lleg" LinkIndex="2" control_object="" copy_type="0" customized_object="Bip001 L Calf" objectName=" L Calf"/>
+	<rleg LimbName="rleg" LinkIndex="3" control_object="" copy_type="0" customized_object="Bip001 R Foot" objectName=" R Foot"/>
+	<lleg LimbName="lleg" LinkIndex="3" control_object="" copy_type="0" customized_object="Bip001 L Foot" objectName=" L Foot"/>
+	<rtoes1 LimbName="rtoes1" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 R Toe0" objectName=" R Toe0"/>
+	<ltoes1 LimbName="ltoes1" LinkIndex="1" control_object="" copy_type="0" customized_object="Bip001 L Toe0" objectName=" L Toe0"/>
+</Root>

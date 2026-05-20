@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root name="control">
+	<head LimbName="head" LinkIndex="1" control_object="Bip001 Head" copy_type="0" customized_object="" objectName=" Head"/>
+	<neck LimbName="neck" LinkIndex="1" control_object="Bip001 Neck" copy_type="0" customized_object="" objectName=" Neck"/>
+	<rarm LimbName="rarm" LinkIndex="1" control_object="Bip001 R Clavicle" copy_type="0" customized_object="" objectName=" R Clavicle"/>
+	<larm LimbName="larm" LinkIndex="1" control_object="Bip001 L Clavicle" copy_type="0" customized_object="" objectName=" L Clavicle"/>
+	<larm LimbName="larm" LinkIndex="2" control_object="Bip001 L UpperArm" copy_type="0" customized_object="" objectName=" L UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="2" control_object="Bip001 R UpperArm" copy_type="0" customized_object="" objectName=" R UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="3" control_object="Bip001 R Forearm" copy_type="0" customized_object="" objectName=" R Forearm"/>
+	<larm LimbName="larm" LinkIndex="3" control_object="Bip001 L Forearm" copy_type="0" customized_object="" objectName=" L Forearm"/>
+	<spine LimbName="spine" LinkIndex="3" control_object="Bip001 Spine2" copy_type="0" customized_object="" objectName=" Spine2"/>
+	<rarm LimbName="rarm" LinkIndex="4" control_object="Bip001 R Hand" copy_type="0" customized_object="" objectName=" R Hand"/>
+	<larm LimbName="larm" LinkIndex="4" control_object="Bip001 L Hand" copy_type="0" customized_object="" objectName=" L Hand"/>
+	<spine LimbName="spine" LinkIndex="2" control_object="Bip001 Spine1" copy_type="0" customized_object="" objectName=" Spine1"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="1" control_object="Bip001 R Finger4" copy_type="0" customized_object="" objectName=" R Finger4"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="1" control_object="Bip001 R Finger3" copy_type="0" customized_object="" objectName=" R Finger3"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="1" control_object="Bip001 R Finger2" copy_type="0" customized_object="" objectName=" R Finger2"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="1" control_object="Bip001 R Finger1" copy_type="0" customized_object="" objectName=" R Finger1"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="1" control_object="Bip001 R Finger0" copy_type="0" customized_object="" objectName=" R Finger0"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="1" control_object="Bip001 L Finger0" copy_type="0" customized_object="" objectName=" L Finger0"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="1" control_object="Bip001 L Finger1" copy_type="0" customized_object="" objectName=" L Finger1"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="1" control_object="Bip001 L Finger2" copy_type="0" customized_object="" objectName=" L Finger2"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="1" control_object="Bip001 L Finger3" copy_type="0" customized_object="" objectName=" L Finger3"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="1" control_object="Bip001 L Finger4" copy_type="0" customized_object="" objectName=" L Finger4"/>
+	<spine LimbName="spine" LinkIndex="1" control_object="Bip001 Spine" copy_type="0" customized_object="" objectName=" Spine"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="2" control_object="Bip001 R Finger41" copy_type="0" customized_object="" objectName=" R Finger41"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="2" control_object="Bip001 R Finger31" copy_type="0" customized_object="" objectName=" R Finger31"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="2" control_object="Bip001 R Finger21" copy_type="0" customized_object="" objectName=" R Finger21"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="2" control_object="Bip001 R Finger11" copy_type="0" customized_object="" objectName=" R Finger11"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="2" control_object="Bip001 R Finger01" copy_type="0" customized_object="" objectName=" R Finger01"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="2" control_object="Bip001 L Finger01" copy_type="0" customized_object="" objectName=" L Finger01"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="2" control_object="Bip001 L Finger11" copy_type="0" customized_object="" objectName=" L Finger11"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="2" control_object="Bip001 L Finger21" copy_type="0" customized_object="" objectName=" L Finger21"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="2" control_object="Bip001 L Finger31" copy_type="0" customized_object="" objectName=" L Finger31"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="2" control_object="Bip001 L Finger41" copy_type="0" customized_object="" objectName=" L Finger41"/>
+	<pelvis LimbName="pelvis" LinkIndex="1" control_object="Bip001 Pelvis" copy_type="0" customized_object="" objectName=" Pelvis"/>
+	<Body LimbName="Body" LinkIndex="1" control_object="Bip001" copy_type="1" customized_object="" objectName=" Body"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="3" control_object="Bip001 R Finger42" copy_type="0" customized_object="" objectName=" R Finger42"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="3" control_object="Bip001 R Finger32" copy_type="0" customized_object="" objectName=" R Finger32"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="3" control_object="Bip001 R Finger22" copy_type="0" customized_object="" objectName=" R Finger22"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="3" control_object="Bip001 R Finger12" copy_type="0" customized_object="" objectName=" R Finger12"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="3" control_object="Bip001 R Finger02" copy_type="0" customized_object="" objectName=" R Finger02"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="3" control_object="Bip001 L Finger02" copy_type="0" customized_object="" objectName=" L Finger02"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="3" control_object="Bip001 L Finger12" copy_type="0" customized_object="" objectName=" L Finger12"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="3" control_object="Bip001 L Finger22" copy_type="0" customized_object="" objectName=" L Finger22"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="3" control_object="Bip001 L Finger32" copy_type="0" customized_object="" objectName=" L Finger32"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="3" control_object="Bip001 L Finger42" copy_type="0" customized_object="" objectName=" L Finger42"/>
+	<rleg LimbName="rleg" LinkIndex="1" control_object="Bip001 R Thigh" copy_type="0" customized_object="" objectName=" R Thigh"/>
+	<lleg LimbName="lleg" LinkIndex="1" control_object="Bip001 L Thigh" copy_type="0" customized_object="" objectName=" L Thigh"/>
+	<rleg LimbName="rleg" LinkIndex="2" control_object="Bip001 R Calf" copy_type="0" customized_object="" objectName=" R Calf"/>
+	<lleg LimbName="lleg" LinkIndex="2" control_object="Bip001 L Calf" copy_type="0" customized_object="" objectName=" L Calf"/>
+	<rleg LimbName="rleg" LinkIndex="3" control_object="Bip001 R Foot" copy_type="0" customized_object="" objectName=" R Foot"/>
+	<lleg LimbName="lleg" LinkIndex="3" control_object="Bip001 L Foot" copy_type="0" customized_object="" objectName=" L Foot"/>
+	<rtoes1 LimbName="rtoes1" LinkIndex="1" control_object="Bip001 R Toe0" copy_type="0" customized_object="" objectName=" R Toe0"/>
+	<ltoes1 LimbName="ltoes1" LinkIndex="1" control_object="Bip001 L Toe0" copy_type="0" customized_object="" objectName=" L Toe0"/>
+</Root>

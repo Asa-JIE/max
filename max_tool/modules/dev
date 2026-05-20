@@ -1,0 +1,72 @@
+我想写个小框架，
+
+我的tool 部署到p4上共享盘上，因为每个人拉的路径都不一样，所以我想用mod的范式去部署
+目前的设计思路是利用bat脚本去运行，然后获取放到max的安装路径下，把mod放在max moudle下面 让max在启动的时候自动运行工具，加载主菜单，max启动之后 max的主菜单栏里有一个名称叫max-tool，
+
+
+目录为
+max-tool
+-rig
+-mesh
+-help
+
+
+功能实现 
+点击bat max启动之后 ， max的主菜单栏里有一个名称叫max-tool主菜单栏  
+菜单目录为
+-rig
+-mesh
+-help 
+点击 help,max显示文本 max_tool记载成功"
+
+
+文件目录
+max-tool/
+├─ install.bat
+│
+├─ modules/
+│  └─ MaxTool.mod.template
+│
+├─ scripts/
+│  ├─ startup/
+│  │  └─ max_tool_startup.ms
+│  │
+│  └─ max_tool/
+│     ├─ core/
+│     │  ├─ bootstrap.ms
+│     │  └─ path_manager.ms
+│     │
+│     ├─ menu_system/
+│     │  ├─ main_menu.ms        # 创建顶部 max-tool 总菜单
+│     │  ├─ menu_register.ms    # 子菜单注册方法
+│     │  └─ menu_loader.ms      # 加载各模块菜单
+│     │
+│     ├─ rig/
+│     │  └─ rig_menu.ms
+│     │
+│     ├─ mesh/
+│     │  └─ mesh_menu.ms
+│     │
+│     └─ help/
+│        └─ help_menu.ms
+│
+└─ icons/
+
+主菜单加载每一个小的菜单管理目录
+
+
+
+方向
+P4共享工具库
+        ↓
+bat安装器
+        ↓
+.mod 注册
+        ↓
+Max启动自动加载
+        ↓
+bootstrap
+        ↓
+菜单系统
+        ↓
+工具模块

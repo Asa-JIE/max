@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root name="customized">
+	<head LimbName="head" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_spine1" objectName=" Head"/>
+	<neck LimbName="neck" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_spine1_T1" objectName=" Neck"/>
+	<rarm LimbName="rarm" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_clavicle" objectName=" R Clavicle"/>
+	<larm LimbName="larm" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_clavicle" objectName=" L Clavicle"/>
+	<larm LimbName="larm" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_upper1" objectName=" L UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_upper1" objectName=" R UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_lower1" objectName=" R Forearm"/>
+	<larm LimbName="larm" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_lower1" objectName=" L Forearm"/>
+	<spine LimbName="spine" LinkIndex="4" control_object="" copy_type="0" customized_object="_hub1_spine1" objectName=" Spine3"/>
+	<spine LimbName="spine" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_T3" objectName=" Spine2"/>
+	<rarm LimbName="rarm" LinkIndex="4" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand" objectName=" R Hand"/>
+	<larm LimbName="larm" LinkIndex="4" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand" objectName=" L Hand"/>
+	<spine LimbName="spine" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_T2" objectName=" Spine1"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger21" objectName=" R Finger1"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger11" objectName=" R Finger0"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger11" objectName=" L Finger0"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger21" objectName=" L Finger1"/>
+	<spine LimbName="spine" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_spine1_T1" objectName=" Spine"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger22" objectName=" R Finger11"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger12" objectName=" R Finger01"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger12" objectName=" L Finger01"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger22" objectName=" L Finger11"/>
+	<Body LimbName="Body" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1" objectName=" Body"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger23" objectName=" R Finger12"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm2_hand_finger13" objectName=" R Finger02"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger13" objectName=" L Finger02"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_spine1_arm1_hand_finger23" objectName=" L Finger12"/>
+	<rleg LimbName="rleg" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_leg2_upper1" objectName=" R Thigh"/>
+	<lleg LimbName="lleg" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_leg1_upper1" objectName=" L Thigh"/>
+	<rleg LimbName="rleg" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_leg2_lower1" objectName=" R Calf"/>
+	<lleg LimbName="lleg" LinkIndex="2" control_object="" copy_type="0" customized_object="_hub1_leg1_lower1" objectName=" L Calf"/>
+	<rleg LimbName="rleg" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_leg2_foot" objectName=" R Foot"/>
+	<lleg LimbName="lleg" LinkIndex="3" control_object="" copy_type="0" customized_object="_hub1_leg1_foot" objectName=" L Foot"/>
+	<rtoes1 LimbName="rtoes1" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_leg2_foot_toe" objectName=" R Toe0"/>
+	<ltoes1 LimbName="ltoes1" LinkIndex="1" control_object="" copy_type="0" customized_object="_hub1_leg1_foot_toe" objectName=" L Toe0"/>
+</Root>
