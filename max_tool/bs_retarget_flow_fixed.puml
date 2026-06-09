@@ -1,0 +1,195 @@
+@startuml
+' BsRetargetTools_v5.1 - 动画重定向流程图
+' 修正版：移除非法自然语言行，全部 Activity 节点使用 :...; 标准语法
+
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+  BackgroundColor #F8F8F8
+  BorderColor #444444
+  FontName Microsoft YaHei
+}
+skinparam note {
+  BackgroundColor #FFF7CC
+  BorderColor #C8A600
+  FontName Microsoft YaHei
+}
+skinparam partition {
+  BorderColor #888888
+  FontName Microsoft YaHei
+}
+
+title BsRetargetTools 动画重定向数据流 / 处理流
+
+start
+
+:明确问题目标;
+:收集源码 / 日志 / 映射文件 / 截图;
+:定位问题发生在重定向流程中的哪一环;
+
+partition "输入资源 / 用户指定" {
+  :原始 Bone / FBX 骨架场景;
+  :映射列表 .list\ncharacterBones / characterBones_B / Root / 手指轴向;
+  :Root 节点 lbxRoot;
+  :动画 FBX 目录 AniFBX;
+  :导出目录 ReOutput;
+  :映射文件 Mapping.max\n由 创建映射文件 生成;
+  :新 Skin 文件 Skin.max\n最终蒙皮角色文件;
+}
+
+partition "Step 1: 骨骼映射与验证" {
+  :自动匹配 btnAutoMapping\n或手动点击列表填入 Bone 名称;
+  :fnLoadMappingList / saveDialogue\n读写 .list 映射预设;
+  :validateButton 检查必需骨骼;
+  if (缺少 HeadNub / FootNub / FingerNub?) then (是)
+    :menuQuickCreateNode.fnDuplicateNub\n自动创建占位 Nub;
+    :重新验证映射;
+  endif
+  :mappingCheckState = true;
+}
+
+partition "Step 2: 创建映射文件 alignBipedToHelper" {
+  :断开原骨架 hips.parent\n记录 rootMotionBone = lbxRoot 指定节点;
+  :创建辅助 Nub / Foot Helper / Finger Helper;
+  :SetupNormalChildFN\n把缺失 Nub 放到合理位置并写回映射列表;
+  :根据原 Bone 位置计算尺寸;
+  :biped.createNew 创建 Biped;
+  :AdjustBipedScale\n按 Bone 距离缩放 Spine / Limb / Foot / Finger;
+  :创建 RTHelper_* 中间骨架;
+  note right
+  RTHelper_* 是动画互通核心：
+  名称来自对应 Biped 节点，
+  位置/方向来自原 Bone 映射。
+  end note
+  :CreateFauxBone\n用 BoneSys.createBone 按原 Bone 点位生成辅助骨;
+  :CreateOrientationConstraint\nRTHelper.rotation 约束到原 Bone;
+  :CreatePositionConstraint\nRoot / Pelvis / Clavicle / Forearm / Hand 等位置约束到原 Bone;
+  :fnAlignBipedToHelper / AlignBipToFaux\n把 Biped 对齐到 RTHelper;
+  :进入 / 退出 figureMode\n复制姿势并再次对齐手指 / 腿;
+  :创建 Root 传递节点\nRTHelper_Root 约束原 Root\nRoot 作为 Biped RootMotion 父节点;
+
+  if (chkCopySubs 重定向飘带动画?) then (是)
+    :fnCopySubBones\n复制未映射子骨骼为 RTHelper_*\n并约束到原子骨骼;
+  else (否)
+    :仅处理 NewHip / NewPelvis 特例;
+  endif
+
+  :保存当前场景为 Mapping.max;
+}
+
+partition "Step 3: FBX转Biped / 生成 Skin.max" {
+  :btnReplaceToBiped;
+  :关闭 Biped figureMode;
+
+  if (非 FBX 套接 Biped 模式?) then (是)
+    :收集所有带 Skin 的 Mesh;
+    :skinOps.saveEnvelope\n临时保存每个 Mesh 的权重 .env;
+  else (否)
+    :原 Bone 保留，Biped 作为控制器;
+  endif
+
+  :fnRenameBiped\n把 Biped 节点改成原 Bone 名称\n原 Bone 改名 OldBone_*;
+  :xchangeSkin / xchangeSkinBone\nSkin 骨骼引用从 OldBone_* 换到同名 Biped;
+  :fnLoadEnvelope\n把 .env 权重重新加载回 Skin;
+  :删除 RTHelper_* / OldBone_* / NewHip_* 等临时节点;
+  :保存清理后的蒙皮角色为 Skin.max;
+}
+
+partition "Step 4: 刷新动画列表" {
+  :btnRefreshFolder / btnLoadAnimPath;
+  :fnRefreshDir;
+  :getFilesRecursive 扫描 AniFBX/**/*.FBX;
+  :qsort fnPseudoNaturalSort 自然排序;
+  :ltbFilesList.items 显示文件名;
+  :arrExportRetargetAnim 保存完整 FBX 路径数组;
+}
+
+partition "Step 5: 单个 / 批量动画重定向" {
+  if (btnRetargetSelected?) then (单个)
+    :取 ltbFilesList.selection;
+  else (批量 btnRetargettAll)
+    :遍历 arrExportRetargetAnim;
+  endif
+
+  if (isReloadBip?) then (是)
+    :fnLoadBipAnim\n从已有 MAX / BIP 重新加载;
+  else (否)
+    :fnExportReTargrtedAnim;
+  endif
+}
+
+partition "fnExportReTargrtedAnim 核心数据链" {
+  :resetMaxFile;
+  :loadMaxFile Mapping.max;
+  :importFile 原始动画 FBX\nMode=#exmerge Animation=true FillTimeline=true;
+
+  if (fixNierFramerate?) then (是)
+    :framerate / rescaleWorldUnits 修正;
+  endif
+
+  if (isScale100?) then (是)
+    :rescaleWorldUnits 100;
+  endif
+
+  :选择 RTHelper_* 或 RetargetHelper_*;
+  :去掉 RTHelper_ 前缀\n使辅助骨导出为目标骨骼名;
+
+  if (isHalfAnimSpeed?) then (是)
+    :fnHalfAnimSpeed\nscaleTime 所有控制器;
+  endif
+
+  if (isEulerFilter?) then (是)
+    :旋转控制器 TCB -> Euler_XYZ\n做欧拉过滤;
+  endif
+
+  :exportFile 临时 tarNewAnim.FBX\n只导出辅助骨动画;
+  :resetMaxFile;
+  :loadMaxFile Skin.max;
+  :关闭 Biped figureMode;
+  :GetBipedNode(1).parent = undefined;
+  :importFile 临时 tarNewAnim.FBX\n把辅助骨动画合并进 Skin.max;
+  :DeleteFile 临时 tarNewAnim.FBX;
+
+  if (场景存在 Root 节点?) then (是)
+    :逐帧记录 Biped Root 世界 Pos / Rot;
+    :rootBone.parent = Root;
+    :创建 layerRootMotionOffset;
+    :逐帧设置 Biped Root 位置\n旋转使用 bipRot * inverse(rootRot);
+    :创建 layerRootMotionReverse;
+    :逐帧还原 Biped Root 世界 Pos / Rot;
+    :collapseAtLayer 合并层;
+  endif
+
+  if (isRemoveRootKeepAnim?) then (是)
+    :逐帧记录 Biped Root 世界 Pos / Rot;
+    :断开 Root 父子;
+    :layerRemoveRoot 写回世界动画;
+    :合并层并删除 Root;
+  endif
+
+  :saveMaxFile 输出 MAX/动画名.max;
+  :选择 Biped_Object / Dummy / BoneGeometry;
+  :exportFile 输出 FBX/动画名.FBX;
+  :biped.saveBipFile 输出 BIP/动画名.bip;
+}
+
+partition "最终产物" {
+  :ReOutput/MAX/*.max\n带 Skin + Biped 动画的 Max 文件;
+  :ReOutput/FBX/*.FBX\n最终可进引擎 / 下游的动画 FBX;
+  :ReOutput/BIP/*.bip\nBiped 动画缓存;
+  :可选 ReOutput/FBX_ReloadBip / MAX_ReloadBip\n重新加载 BIP 流程输出;
+}
+
+stop
+
+legend right
+== 关键对象说明 ==
+.list : 骨骼名称映射 + Root + 手指轴向配置
+Mapping.max : 中间映射场景，包含 Biped、Root、RTHelper_* 约束链
+Skin.max : 最终蒙皮角色，Skin 已从原 Bone 换绑到 Biped
+AniFBX/*.FBX : 原始动画源文件
+arrExportRetargetAnim : 动画 FBX 完整路径数组
+RTHelper_* : 原 Bone 动画 -> Biped / Skin 的中间传递骨架
+Root : RootMotion 传递节点
+endlegend
+
+@enduml
