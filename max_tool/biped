@@ -1226,6 +1226,326 @@ rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 �
 		true
 	)
 
+
+	-- ============================================================
+	-- [FIX][方案二] 导出前把 Constraint 驱动的 RTHelper 烘焙成干净骨骼
+	-- 目的:
+	--   1. 不直接导出带 Position/Orientation/LookAt Constraint 的 RTHelper
+	--   2. 避免 FBX Export 在导出瞬间重新 evaluate 约束，导致 Frame0 手臂漂移
+	--   3. 生成一套无约束、只带关键帧的临时导出骨骼，名称保持为最终 FBX 需要的名称
+	-- 使用位置:
+	--   在 fnExportReTargrtedAnim 第一次 exportFile tarNewAnim 之前调用
+	-- ============================================================
+	fn fnBakeConstraintBonesForFBXExport arrSrc startFrame endFrame =
+	(
+		local arrBake = #()
+		local arrSrcValid = #()
+		local srcNameList = #()
+		local oldAnimateState = animateMode
+		local oldSliderTime = sliderTime
+
+		-- 只保留有效骨骼 / Helper
+		for n in arrSrc where isValidNode n do
+		(
+			if (classof n == BoneGeometry or classof n == Dummy or classof n == Point) do
+			(
+				append arrSrcValid n
+				append srcNameList n.name
+			)
+		)
+
+		if arrSrcValid.count == 0 then
+		(
+			format "[BakeExport][ERROR] No valid RTHelper nodes to bake.\n"
+			return #()
+		)
+
+		format "[BakeExport] Bake nodes count: %\n" arrSrcValid.count
+
+		-- ------------------------------------------------------------
+		-- Step 1:
+		-- 先把源节点改名，释放原名字给临时导出骨骼使用
+		-- 这样导出的 FBX 骨骼名仍然是 Bip001 / Bip001 L UpperArm 等目标名
+		-- ------------------------------------------------------------
+		for i = 1 to arrSrcValid.count do
+		(
+			try(arrSrcValid[i].name = ("__SRC_RTHelper__" + srcNameList[i]))catch()
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 2:
+		-- 复制一套临时导出骨骼，并清掉约束控制器
+		-- 注意：copy 出来的节点可能带原 controller，所以必须重建 pos/rot/scale controller
+		-- ------------------------------------------------------------
+		for i = 1 to arrSrcValid.count do
+		(
+			local src = arrSrcValid[i]
+			local bakeNode = copy src
+
+			bakeNode.name = srcNameList[i]
+			bakeNode.parent = undefined
+			bakeNode.wirecolor = yellow
+			bakeNode.boxmode = true
+
+			try(bakeNode.position.controller = Position_XYZ())catch()
+			try(bakeNode.rotation.controller = Euler_XYZ())catch()
+			try(bakeNode.scale.controller    = Bezier_Scale())catch()
+
+			-- 先放到源节点当前世界矩阵，避免建立父子级之前姿态错
+			at time startFrame
+			(
+				bakeNode.transform = src.transform
+			)
+
+			append arrBake bakeNode
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 3:
+		-- 按源 RTHelper 的父子关系重建临时骨骼层级
+		-- 如果源节点 parent 在 arrSrcValid 里面，就让 bakeNode parent 到对应 bake parent
+		-- ------------------------------------------------------------
+		for i = 1 to arrSrcValid.count do
+		(
+			local srcParent = arrSrcValid[i].parent
+			if isValidNode srcParent do
+			(
+				local parentIndex = findItem arrSrcValid srcParent
+				if parentIndex != 0 do
+				(
+					try(arrBake[i].parent = arrBake[parentIndex])catch()
+				)
+			)
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 4:
+		-- 逐帧把源节点的世界 transform 烘焙到临时导出骨骼
+		-- 这里读取的是已经 evaluate 后的最终结果，但导出的骨骼本身不再依赖 constraint
+		-- ------------------------------------------------------------
+		animate on
+		(
+			for t = startFrame to endFrame do
+			(
+				sliderTime = t
+				forceCompleteRedraw()
+
+				for i = 1 to arrSrcValid.count do
+				(
+					if isValidNode arrSrcValid[i] and isValidNode arrBake[i] do
+					(
+						at time t
+						(
+							arrBake[i].transform = arrSrcValid[i].transform
+						)
+					)
+				)
+			)
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 5:
+		-- 恢复时间和动画状态
+		-- ------------------------------------------------------------
+		sliderTime = oldSliderTime
+		if oldAnimateState == false do animate off
+
+		format "[BakeExport] Bake export skeleton generated.\n"
+		return arrBake
+	)
+
+
+	-- ============================================================
+	-- [FIX][Arm Override] Skin.max 导入 tarNewAnim.FBX 后，重新用 FBX 源骨骼修正两条胳膊
+	-- 目的:
+	--   1. 保留原来的 FBXIMP #exmerge 同名合并全身动画
+	--   2. 但不再完全相信 FBXIMP 对 Biped 手臂链的自动合并结果
+	--   3. 第二次导入 tarNewAnim.FBX，临时拿到独立的 FBX 手臂源骨骼
+	--   4. 逐帧读取 FBX 源骨骼 world transform，显式写回 Skin.max 里的 Biped 手臂
+	-- 修正骨骼:
+	--   23 = Bip001 L UpperArm
+	--   24 = Bip001 L Forearm
+	--   25 = Bip001 L Hand
+	--   47 = Bip001 R UpperArm
+	--   48 = Bip001 R Forearm
+	--   49 = Bip001 R Hand
+	-- 调用位置:
+	--   load Skin.max -> 第一次 importFile tarNewAnim #noPrompt using:FBXIMP 之后
+	-- ============================================================
+	fn fnFixBipedArmsFromFBXSource tarNewAnim startFrame endFrame =
+	(
+		format "\n[ArmFix] ========================================\n"
+		format "[ArmFix] Start arm override from FBX source.\n"
+		format "[ArmFix] FBX: %\n" tarNewAnim
+
+		if not (doesFileExist tarNewAnim) then
+		(
+			format "[ArmFix][ERROR] tarNewAnim not found: %\n" tarNewAnim
+			return false
+		)
+
+		local armIDs   = #(23,24,25,47,48,49)
+		local bipNodes = #()
+		local oldNames = #()
+		local tmpNames = #()
+		local srcNodes = #()
+
+		-- 刷新 Biped 缓存，确保 GetBipedNode 可以拿到当前 Skin.max 的 Biped 节点
+		try(GetBipedNode 1)catch()
+
+		-- ------------------------------------------------------------
+		-- Step 1: 把 Skin.max 里的 Biped 手臂临时改名
+		-- 这样第二次导入 FBX 时，FBX 里的同名手臂不会再被合并进 Biped，
+		-- 而是作为独立源骨骼进入场景。
+		-- ------------------------------------------------------------
+		for id in armIDs do
+		(
+			local bipNode = undefined
+			try(bipNode = GetBipedNode id)catch()
+
+			append bipNodes bipNode
+
+			if bipNode != undefined then
+			(
+				local oldName = bipNode.name
+				local tmpName = ("__SKIN_BIP_ARM_TMP__" + (id as string) + "__" + oldName)
+
+				append oldNames oldName
+				append tmpNames tmpName
+
+				try(bipNode.name = tmpName)catch()
+				format "[ArmFix] Rename Skin Biped Arm: % -> %\n" oldName tmpName
+			)
+			else
+			(
+				append oldNames ""
+				append tmpNames ""
+				format "[ArmFix][WARN] Missing Skin Biped arm id: %\n" id
+			)
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 2: 第二次导入 tarNewAnim.FBX
+		-- 非手臂骨骼仍然可能被 #exmerge 合并；手臂因为已经临时改名，会作为源骨骼进入场景。
+		-- ------------------------------------------------------------
+		FbxImporterSetParam "Mode" #exmerge
+		FbxImporterSetParam "Animation" true
+		FbxImporterSetParam "FillTimeline" true
+		FbxImporterSetParam "BakeAnimationLayers" false
+		FbxImporterSetParam "PointCache" false
+
+		importFile tarNewAnim #noPrompt using:FBXIMP
+
+		-- ------------------------------------------------------------
+		-- Step 3: 找到第二次导入进来的 FBX 源手臂骨骼
+		-- ------------------------------------------------------------
+		for k = 1 to oldNames.count do
+		(
+			local srcNode = undefined
+			if oldNames[k] != "" do
+			(
+				try(srcNode = getNodeByName oldNames[k])catch()
+			)
+			append srcNodes srcNode
+			format "[ArmFix] Source FBX Arm Node: % -> %\n" oldNames[k] srcNode
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 4: 先缓存 FBX 源手臂每一帧的 world transform
+		-- 注意：必须先缓存，再写 Biped。避免源骨骼父级被 Biped 影响造成反馈。
+		-- ------------------------------------------------------------
+		local srcTMList = for k = 1 to armIDs.count collect #()
+
+		for t = startFrame to endFrame do
+		(
+			sliderTime = t
+			forceCompleteRedraw()
+
+			for k = 1 to armIDs.count do
+			(
+				local srcNode = srcNodes[k]
+				if srcNode != undefined and isValidNode srcNode then
+				(
+					at time t append srcTMList[k] srcNode.transform
+				)
+				else
+				(
+					append srcTMList[k] undefined
+				)
+			)
+		)
+
+		format "[ArmFix] Source transforms cached. Frames: % -> %\n" startFrame endFrame
+
+		-- ------------------------------------------------------------
+		-- Step 5: 逐帧把 FBX 源手臂数据显式写回 Skin Biped
+		-- 顺序必须是 UpperArm -> Forearm -> Hand。
+		-- UpperArm / Forearm 主要写 rotation；Hand 写 pos + rotation 用来压末端位置。
+		-- ------------------------------------------------------------
+		for f = 1 to ((endFrame - startFrame) + 1) do
+		(
+			local t = startFrame + f - 1
+			sliderTime = t
+
+			at time t with animate on
+			(
+				for k = 1 to armIDs.count do
+				(
+					local id = armIDs[k]
+					local bipNode = bipNodes[k]
+					local srcTM = srcTMList[k][f]
+
+					if bipNode != undefined and isValidNode bipNode and srcTM != undefined then
+					(
+						-- 先写旋转
+						try(in coordsys world biped.setTransform bipNode #rotation srcTM.rotation true)catch(format "[ArmFix][WARN] set rotation failed id:% frame:%\n" id t)
+
+						-- 手腕末端额外写位置，避免 Hand 末端被自动合并后的链长/局部空间带偏
+						if id == 25 or id == 49 then
+						(
+							try(in coordsys world biped.setTransform bipNode #pos srcTM.position true)catch(format "[ArmFix][WARN] set hand pos failed id:% frame:%\n" id t)
+							try(in coordsys world biped.setTransform bipNode #rotation srcTM.rotation true)catch()
+						)
+					)
+				)
+			)
+		)
+
+		format "[ArmFix] Biped arm override keys written.\n"
+
+		-- ------------------------------------------------------------
+		-- Step 6: 删除第二次导入的 FBX 源手臂
+		-- 倒序删除，避免删父级时子级已被连带删除导致报错。
+		-- ------------------------------------------------------------
+		for k = srcNodes.count to 1 by -1 do
+		(
+			local srcNode = srcNodes[k]
+			if srcNode != undefined and isValidNode srcNode do
+			(
+				try(delete srcNode)catch()
+			)
+		)
+
+		-- ------------------------------------------------------------
+		-- Step 7: 恢复 Skin Biped 手臂原名，并刷新 Biped 缓存
+		-- ------------------------------------------------------------
+		for k = 1 to bipNodes.count do
+		(
+			if bipNodes[k] != undefined and isValidNode bipNodes[k] and oldNames[k] != "" do
+			(
+				try(bipNodes[k].name = oldNames[k])catch()
+				format "[ArmFix] Restore Skin Biped Arm Name: %\n" oldNames[k]
+			)
+		)
+
+		try(GetBipedNode 1)catch()
+
+		format "[ArmFix] Done.\n"
+		format "[ArmFix] ========================================\n\n"
+		return true
+	)
+
+
 	fn fnExportReTargrtedAnim arrExportRetargetAnim index =
 	(
 		if (index != 0) and (doesFileExist arrExportRetargetAnim[index]) then
@@ -1324,17 +1644,31 @@ rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 �
 			FBXExporterSetParam "ASCII" false
 			FBXExporterSetParam "FileVersion" "FBX201200"
 
-			select arrExport
+			-- ============================================================
+			-- [FIX][方案二] 不再直接导出 arrExport/RTHelper
+			-- 原因:
+			--   arrExport 是 Constraint 驱动骨骼，FBX export 时会重新 evaluate，
+			--   容易导致 Frame0 手臂链 UpperArm / Forearm / Hand 发生偏移。
+			-- 做法:
+			--   先生成一套无约束的临时 Bake 骨骼，并把每一帧世界矩阵烘焙进去，
+			--   然后只导出这套 Bake 骨骼。
+			-- ============================================================
+			local arrBakeExport = fnBakeConstraintBonesForFBXExport arrExport animationRange.start animationRange.end
+			select arrBakeExport
 
 			if isEulerFilter then 
 			(
 				for i in selection where classof i == BoneGeometry or classof i == dummy or classof i == point do
 				(
-					if classof i.rotation.controller == Euler_XYZ then
+					try
 					(
-						i.rotation.controller = tcb_rotation ()
-						i.rotation.controller = Euler_XYZ ()
+						if classof i.rotation.controller == Euler_XYZ then
+						(
+							i.rotation.controller = tcb_rotation ()
+							i.rotation.controller = Euler_XYZ ()
+						)
 					)
+					catch()
 				)
 			)
 
@@ -1365,7 +1699,15 @@ rollout rolBsRetarget "BsRetargetTools_v5.1 （ FBX 转 BIP + 动画重定向 �
 			-- 	dummyRootMotionTemp.constantscreensize = false
 			-- )
 			(GetBipedNode 1).parent = undefined
+
+			-- 第一次导入：保持原始逻辑，让 FBXIMP #exmerge 先按同名合并全身动画
 			importFile tarNewAnim #noPrompt using:FBXIMP
+
+			-- [FIX][Arm Override]
+			-- 第二次导入同一个 tarNewAnim.FBX，临时拿到独立 FBX 手臂源骨骼，
+			-- 再逐帧显式写回 Biped UpperArm / Forearm / Hand。
+			fnFixBipedArmsFromFBXSource tarNewAnim animationRange.start animationRange.end
+
 			DeleteFile tarNewAnim
 
 			if (getnodebyname "Root") != undefined then 
