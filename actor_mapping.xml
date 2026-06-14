@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root name="action">
+	<head LimbName="head" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_head" objectName=" Head"/>
+	<neck LimbName="neck" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_head_neck" objectName=" Neck"/>
+	<rarm LimbName="rarm" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_clavicle_0" objectName=" R Clavicle"/>
+	<larm LimbName="larm" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_clavicle_0" objectName=" L Clavicle"/>
+	<larm LimbName="larm" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_arm_up" objectName=" L UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_arm_up" objectName=" R UpperArm"/>
+	<rarm LimbName="rarm" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_arm_mid" objectName=" R Forearm"/>
+	<larm LimbName="larm" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_arm_mid" objectName=" L Forearm"/>
+	<spine LimbName="spine" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_spine_chest" objectName=" Spine2"/>
+	<rarm LimbName="rarm" LinkIndex="4" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_arm_down" objectName=" R Hand"/>
+	<larm LimbName="larm" LinkIndex="4" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_arm_down" objectName=" L Hand"/>
+	<spine LimbName="spine" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_spine_1" objectName=" Spine1"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_pinky_0" objectName=" R Finger4"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_ring_0" objectName=" R Finger3"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_middle_0" objectName=" R Finger2"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_index_0" objectName=" R Finger1"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_thumb_0" objectName=" R Finger0"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_thumb_0" objectName=" L Finger0"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_index_0" objectName=" L Finger1"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_middle_0" objectName=" L Finger2"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_ring_0" objectName=" L Finger3"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_pinky_0" objectName=" L Finger4"/>
+	<spine LimbName="spine" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_spine_0" objectName=" Spine"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_pinky_1" objectName=" R Finger41"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_ring_1" objectName=" R Finger31"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_middle_1" objectName=" R Finger21"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_index_1" objectName=" R Finger11"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_thumb_1" objectName=" R Finger01"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_thumb_1" objectName=" L Finger01"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_index_1" objectName=" L Finger11"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_middle_1" objectName=" L Finger21"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_ring_1" objectName=" L Finger31"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_pinky_1" objectName=" L Finger41"/>
+	<pelvis LimbName="pelvis" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_spine_hips" objectName=" Pelvis"/>
+	<Body LimbName="Body" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="2" copy_type1="2" ctr_transform="" cust_transform="" customized_object="def_spine_cog" objectName=" Body"/>
+	<rfingers5 LimbName="rfingers5" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_pinky_2" objectName=" R Finger42"/>
+	<rfingers4 LimbName="rfingers4" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_ring_2" objectName=" R Finger32"/>
+	<rfingers3 LimbName="rfingers3" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_middle_2" objectName=" R Finger22"/>
+	<rfingers2 LimbName="rfingers2" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_index_2" objectName=" R Finger12"/>
+	<rfingers1 LimbName="rfingers1" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_thumb_2" objectName=" R Finger02"/>
+	<lfingers1 LimbName="lfingers1" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_thumb_2" objectName=" L Finger02"/>
+	<lfingers2 LimbName="lfingers2" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_index_2" objectName=" L Finger12"/>
+	<lfingers3 LimbName="lfingers3" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_middle_2" objectName=" L Finger22"/>
+	<lfingers4 LimbName="lfingers4" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_ring_2" objectName=" L Finger32"/>
+	<lfingers5 LimbName="lfingers5" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_pinky_2" objectName=" L Finger42"/>
+	<rleg LimbName="rleg" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_leg_up" objectName=" R Thigh"/>
+	<lleg LimbName="lleg" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_leg_up" objectName=" L Thigh"/>
+	<rleg LimbName="rleg" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_leg_mid" objectName=" R Calf"/>
+	<lleg LimbName="lleg" LinkIndex="2" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_leg_mid" objectName=" L Calf"/>
+	<rleg LimbName="rleg" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_foot_base" objectName=" R Foot"/>
+	<lleg LimbName="lleg" LinkIndex="3" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_foot_base" objectName=" L Foot"/>
+	<rtoes1 LimbName="rtoes1" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_R_toe_0" objectName=" R Toe0"/>
+	<ltoes1 LimbName="ltoes1" LinkIndex="1" OffsetTm="" Offsetbm="" control_object="" copy_type="0" copy_type1="0" ctr_transform="" cust_transform="" customized_object="def_L_toe_0" objectName=" L Toe0"/>
+</Root>

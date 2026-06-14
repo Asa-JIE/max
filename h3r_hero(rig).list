@@ -1,0 +1,76 @@
+def_spine_cog
+def_spine_hips
+def_spine_0
+def_spine_1
+def_spine_chest
+~undefined~
+~undefined~
+def_head_neck
+~undefined~
+def_head
+def_head nub
+def_L_leg_up
+def_L_leg_mid
+def_L_foot_base
+def_L_toe_0
+def_L_toe_0 nub
+def_R_leg_up
+def_R_leg_mid
+def_R_foot_base
+def_R_toe_0
+def_R_toe_0 nub
+def_L_clavicle_0
+def_L_arm_up
+def_L_arm_mid
+def_L_arm_down
+def_L_index_0
+def_L_index_1
+def_L_index_2
+def_L_index_2 nub
+def_L_middle_0
+def_L_middle_1
+def_L_middle_2
+def_L_middle_2 nub
+def_L_pinky_0
+def_L_pinky_1
+def_L_pinky_2
+def_L_pinky_2 nub
+def_L_ring_0
+def_L_ring_1
+def_L_ring_2
+def_L_ring_2 nub
+def_L_thumb_0
+def_L_thumb_1
+def_L_thumb_2
+def_L_thumb_2 nub
+def_R_clavicle_0
+def_R_arm_up
+def_R_arm_mid
+def_R_arm_down
+def_R_index_0
+def_R_index_1
+def_R_index_2
+def_R_index_2 nub
+def_R_middle_0
+def_R_middle_1
+def_R_middle_2
+def_R_middle_2 nub
+def_R_pinky_0
+def_R_pinky_1
+def_R_pinky_2
+def_R_pinky_2 nub
+def_R_ring_0
+def_R_ring_1
+def_R_ring_2
+def_R_ring_2 nub
+def_R_thumb_0
+def_R_thumb_1
+def_R_thumb_2
+def_R_thumb_2 nub
+~undefined~
+3
+3
+3
+3
+3
+3

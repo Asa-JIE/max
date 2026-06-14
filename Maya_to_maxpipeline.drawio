@@ -1,0 +1,134 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.4 Chrome/138.0.7204.97 Electron/37.2.1 Safari/537.36" version="28.0.4">
+  <diagram name="第 1 页" id="lMEK3hoaxM3vZdFF9vJe">
+    <mxGraphModel dx="1816" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-1" value="rig_fbx&lt;br&gt;角色骨架+蒙皮" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="360" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-2" value="max创建(rig文件)&lt;br&gt;合并 Maya骨架&lt;br&gt;权重迁移" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="90" y="490" width="100" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-3" value="(ani_fbx)&lt;br&gt;动画骨架数据" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="360" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-4" value="bip 动画&lt;br&gt;(.max)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="570" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-6" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="EHzPezRAPhP3Uu3yZXPp-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="339.5" y="410" as="sourcePoint" />
+            <mxPoint x="340" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-7" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="134.71" y="410" as="sourcePoint" />
+            <mxPoint x="135" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-9" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="149.41" y="600" as="sourcePoint" />
+            <mxPoint x="149.41" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-10" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="339.49" y="620" as="sourcePoint" />
+            <mxPoint x="339.70374999999996" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-12" value="bip moition file&lt;div&gt;(.bip)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="290.14" y="680" width="99.71" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-14" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="340" y="730" as="sourcePoint" />
+            <mxPoint x="210" y="760" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="760" />
+              <mxPoint x="270" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-15" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="150" y="810" as="sourcePoint" />
+            <mxPoint x="149.71" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-16" value="替换数据" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="240" y="760" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-17" value="fbx (rig数据)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="505" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-18" value="" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="-90" y="520" as="sourcePoint" />
+            <mxPoint x="60" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-19" value="最终动画FBX导出&amp;nbsp;&lt;br&gt;ani_fbx" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="880" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-20" value="maya&lt;br&gt;原始角色工程&amp;nbsp;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="180" y="110" width="90" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-21" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="229.66000000000003" y="230" as="sourcePoint" />
+            <mxPoint x="229.81" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-22" value="输出" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EHzPezRAPhP3Uu3yZXPp-21">
+          <mxGeometry x="-0.1859" y="-4" relative="1" as="geometry">
+            <mxPoint x="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-23" value="max(biped_rig)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="1">
+          <mxGeometry x="110" y="700" width="80" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-24" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="210" y="290" as="sourcePoint" />
+            <mxPoint x="145" y="350" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="145" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-25" value="输出Rig FBX" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EHzPezRAPhP3Uu3yZXPp-24">
+          <mxGeometry x="-0.2353" y="-7" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-26" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="270" y="290" as="sourcePoint" />
+            <mxPoint x="340" y="350" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-27" value="输出动画FBX" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="EHzPezRAPhP3Uu3yZXPp-26">
+          <mxGeometry x="-0.2353" y="-7" relative="1" as="geometry">
+            <mxPoint x="-10" y="-17" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-28" value="FBX → Biped重定向&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="285" y="460" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="EHzPezRAPhP3Uu3yZXPp-29" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="339.5" y="520" as="sourcePoint" />
+            <mxPoint x="340" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
