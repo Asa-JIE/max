@@ -2,22 +2,22 @@ try(destroyDialog rolBatchBipToFBX)catch()
 
 rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 (
-    editText edtBipFolder "BIP???:" text:"" width:410 across:2
-    button btnPickBip "??" width:80
+    editText edtBipFolder "BIP Folder:" text:"" width:410 across:2
+    button btnPickBip "Pick" width:80
 
-    editText edtOutFolder "FBX??:" text:"" width:410 across:2
-    button btnPickOut "??" width:80
+    editText edtOutFolder "FBX Out:" text:"" width:410 across:2
+    button btnPickOut "Pick" width:80
 
-    editText edtBipRoot "Biped Root?:" text:"Bip001" width:220
+    editText edtBipRoot "Biped Root:" text:"Bip001" width:220
 
-    checkbox chkRecursive "??????" checked:false
+    checkbox chkRecursive "Recursive" checked:false
 
-    spinner spnStart "Start:" range:[-99999,99999,0] type:#integer width:160
-    spinner spnEnd "End:" range:[-99999,99999,100] type:#integer width:160
+    spinner spnStart "Fallback Start:" range:[-99999,99999,0] type:#integer width:160
+    spinner spnEnd "Fallback End:" range:[-99999,99999,100] type:#integer width:160
 
-    button btnRun "?????? FBX" width:520 height:36
+    button btnRun "Batch Export FBX" width:520 height:36
 
-    listBox lbLog "??" width:530 height:18
+    listBox lbLog "Log" width:530 height:18
 
     fn logMsg msg =
     (
@@ -29,7 +29,6 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
     fn getBipFiles folder recursive:false =
     (
         local result = #()
-
         if not doesDirectoryExist folder do return result
 
         join result (getFiles (folder + "\\*.bip"))
@@ -37,10 +36,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
         if recursive do
         (
             local dirs = getDirectories (folder + "\\*")
-            for d in dirs do
-            (
-                join result (getBipFiles d recursive:true)
-            )
+            for d in dirs do join result (getBipFiles d recursive:true)
         )
 
         result
@@ -53,15 +49,9 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 
         if not isValidNode rootNode do return result
 
-        if includeRoot do
-        (
-            appendIfUnique result rootNode
-        )
+        if includeRoot do appendIfUnique result rootNode
 
-        for c in rootNode.children do
-        (
-            append stack c
-        )
+        for c in rootNode.children do append stack c
 
         while stack.count > 0 do
         (
@@ -71,11 +61,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
             if isValidNode n do
             (
                 appendIfUnique result n
-
-                for c in n.children do
-                (
-                    append stack c
-                )
+                for c in n.children do append stack c
             )
         )
 
@@ -104,6 +90,69 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
         )
 
         ok
+    )
+
+    fn collectKeyTimesFromController ctrl timeArr =
+    (
+        if ctrl == undefined do return timeArr
+
+        try
+        (
+            local nk = numKeys ctrl
+            if nk > 0 do
+            (
+                for i = 1 to nk do
+                (
+                    local t = getKeyTime ctrl i
+                    appendIfUnique timeArr t
+                )
+            )
+        )catch()
+
+        try
+        (
+            for i = 1 to ctrl.numSubs do
+            (
+                collectKeyTimesFromController ctrl[i] timeArr
+            )
+        )catch()
+
+        timeArr
+    )
+
+    fn getAnimRangeFromNodes nodes fallbackStart fallbackEnd =
+    (
+        local times = #()
+
+        for n in nodes do
+        (
+            if isValidNode n do
+            (
+                try(collectKeyTimesFromController n.controller times)catch()
+                try(collectKeyTimesFromController n.transform.controller times)catch()
+                try(collectKeyTimesFromController n.position.controller times)catch()
+                try(collectKeyTimesFromController n.rotation.controller times)catch()
+                try(collectKeyTimesFromController n.scale.controller times)catch()
+            )
+        )
+
+        if times.count == 0 then
+        (
+            interval fallbackStart fallbackEnd
+        )
+        else
+        (
+            local tMin = times[1]
+            local tMax = times[1]
+
+            for t in times do
+            (
+                if t < tMin do tMin = t
+                if t > tMax do tMax = t
+            )
+
+            interval tMin tMax
+        )
     )
 
     fn setupFBXExport startFrame endFrame =
@@ -146,13 +195,13 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 
     on btnPickBip pressed do
     (
-        local p = getSavePath caption:"?? BIP ???"
+        local p = getSavePath caption:"Pick BIP Folder"
         if p != undefined do edtBipFolder.text = p
     )
 
     on btnPickOut pressed do
     (
-        local p = getSavePath caption:"?? FBX ?????"
+        local p = getSavePath caption:"Pick FBX Output Folder"
         if p != undefined do edtOutFolder.text = p
     )
 
@@ -166,7 +215,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 
         if bipFolder == "" or not doesDirectoryExist bipFolder then
         (
-            messageBox "?????? BIP ???"
+            messageBox "Please pick BIP folder"
             return false
         )
 
@@ -182,7 +231,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 
         if not isValidNode bipRoot then
         (
-            messageBox ("??? Biped Root: " + rootName)
+            messageBox ("Cannot find Biped Root: " + rootName)
             return false
         )
 
@@ -190,17 +239,14 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
 
         if bipFiles.count == 0 then
         (
-            messageBox "???? .bip ??"
+            messageBox "No .bip files found"
             return false
         )
 
-        local startFrame = spnStart.value as integer
-        local endFrame = spnEnd.value as integer
+        local fallbackStart = spnStart.value as integer
+        local fallbackEnd = spnEnd.value as integer
 
-        animationRange = interval startFrame endFrame
-
-        logMsg ("BIP??: " + bipFiles.count as string)
-        logMsg ("Frame: " + startFrame as string + " - " + endFrame as string)
+        logMsg ("BIP Count: " + bipFiles.count as string)
 
         local success = 0
         local failed = 0
@@ -221,16 +267,26 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
                 (
                     local exportNodes = getAllChildrenUnderRoot bipRoot includeRoot:true
 
-                    logMsg ("Export????: " + exportNodes.count as string)
+                    logMsg ("Export Nodes: " + exportNodes.count as string)
 
                     if exportNodes.count == 0 then
                     (
                         failed += 1
-                        logMsg "[FAILED] Bip001??????"
+                        logMsg "[FAILED] No export nodes"
                     )
                     else
                     (
-                        exportFBX outFile exportNodes startFrame endFrame
+                        local bipRange = getAnimRangeFromNodes exportNodes fallbackStart fallbackEnd
+
+                        local realStart = bipRange.start.frame as integer
+                        local realEnd = bipRange.end.frame as integer
+
+                        animationRange = interval realStart realEnd
+                        sliderTime = realStart
+
+                        logMsg ("BIP Real Frame: " + realStart as string + " - " + realEnd as string)
+
+                        exportFBX outFile exportNodes realStart realEnd
 
                         success += 1
                         logMsg ("[OK] " + outFile)
@@ -239,6 +295,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
                 else
                 (
                     failed += 1
+                    logMsg "[FAILED] Load BIP failed"
                 )
             )
             catch
@@ -255,7 +312,7 @@ rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
         logMsg ("Success: " + success as string)
         logMsg ("Failed : " + failed as string)
 
-        messageBox ("??\nSuccess: " + success as string + "\nFailed: " + failed as string)
+        messageBox ("Done\nSuccess: " + success as string + "\nFailed: " + failed as string)
     )
 )
 
