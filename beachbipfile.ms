@@ -1,319 +1,418 @@
-try(destroyDialog rolBatchBipToFBX)catch()
+try(destroyDialog rolBatchBipFbxMerge)catch()
 
-rollout rolBatchBipToFBX "Batch BIP To FBX - Max2020" width:560 height:560
+rollout rolBatchBipFbxMerge "Batch BIP + FBX Extra Anim Merge - Max2020" width:620 height:585
 (
-    editText edtBipFolder "BIP Folder:" text:"" width:410 across:2
-    button btnPickBip "Pick" width:80
+    editText edtRigMax "bip_rig.max:" text:@"" width:455 across:2
+    button btnPickRig "选择" width:70
 
-    editText edtOutFolder "FBX Out:" text:"" width:410 across:2
-    button btnPickOut "Pick" width:80
+    editText edtBipDir "BIP目录:" text:@"D:\testbip\" width:455 across:2
+    button btnPickBip "选择" width:70
 
-    editText edtBipRoot "Biped Root:" text:"Bip001" width:220
+    editText edtFbxDir "FBX目录:" text:@"D:\testfbx\" width:455 across:2
+    button btnPickFbx "选择" width:70
 
-    checkbox chkRecursive "Recursive" checked:false
+    editText edtOutDir "输出目录:" text:@"D:\test\output\" width:455 across:2
+    button btnPickOut "选择" width:70
 
-    spinner spnStart "Fallback Start:" range:[-99999,99999,0] type:#integer width:160
-    spinner spnEnd "Fallback End:" range:[-99999,99999,100] type:#integer width:160
+    checkbox chkSaveMax "输出 MAX" checked:true across:3
+    checkbox chkExportFbx "输出 FBX" checked:true
+    checkbox chkSkipExist "跳过已存在" checked:false
 
-    button btnRun "Batch Export FBX" width:520 height:36
+    label lblMode "Extra骨骼动画模式：World Transform 逐帧直拷，最终披风/布料世界位置跟源FBX一致" width:585
 
-    listBox lbLog "Log" width:530 height:18
+    button btnRefresh "刷新匹配列表" width:580 height:28
+    listBox lbFiles "匹配到的动画:" width:580 height:16
+
+    button btnRun "开始批量生成" width:580 height:36
+    listBox lbLog "日志:" width:580 height:12
+
+    local arrPairs = #()
+    local srcPrefix = "SRC_"
+    local dstTempPrefix = "__DST_KEEP__"
 
     fn logMsg msg =
     (
-        lbLog.items = append lbLog.items msg
-        lbLog.selection = lbLog.items.count
+        local a = lbLog.items
+        append a msg
+        lbLog.items = a
+        lbLog.selection = a.count
         format "%\n" msg
     )
 
-    fn getBipFiles folder recursive:false =
+    fn ensureSlash p =
     (
-        local result = #()
-        if not doesDirectoryExist folder do return result
-
-        join result (getFiles (folder + "\\*.bip"))
-
-        if recursive do
-        (
-            local dirs = getDirectories (folder + "\\*")
-            for d in dirs do join result (getBipFiles d recursive:true)
-        )
-
-        result
-    )
-
-    fn getAllChildrenUnderRoot rootNode includeRoot:true =
-    (
-        local result = #()
-        local stack = #()
-
-        if not isValidNode rootNode do return result
-
-        if includeRoot do appendIfUnique result rootNode
-
-        for c in rootNode.children do append stack c
-
-        while stack.count > 0 do
-        (
-            local n = stack[stack.count]
-            deleteItem stack stack.count
-
-            if isValidNode n do
-            (
-                appendIfUnique result n
-                for c in n.children do append stack c
-            )
-        )
-
-        result
-    )
-
-    fn loadBipAnim bipRoot bipFile =
-    (
-        local ok = false
-
-        try
-        (
-            biped.loadBipFile bipRoot.controller bipFile
-            ok = true
-        )
-        catch
-        (
-            format "[ERROR] Load BIP failed: %\n" (getCurrentException())
-            ok = false
-        )
-
-        if ok do
-        (
-            sliderTime = animationRange.start
-            completeRedraw()
-        )
-
-        ok
-    )
-
-    fn collectKeyTimesFromController ctrl timeArr =
-    (
-        if ctrl == undefined do return timeArr
-
-        try
-        (
-            local nk = numKeys ctrl
-            if nk > 0 do
-            (
-                for i = 1 to nk do
-                (
-                    local t = getKeyTime ctrl i
-                    appendIfUnique timeArr t
-                )
-            )
-        )catch()
-
-        try
-        (
-            for i = 1 to ctrl.numSubs do
-            (
-                collectKeyTimesFromController ctrl[i] timeArr
-            )
-        )catch()
-
-        timeArr
-    )
-
-    fn getAnimRangeFromNodes nodes fallbackStart fallbackEnd =
-    (
-        local times = #()
-
-        for n in nodes do
-        (
-            if isValidNode n do
-            (
-                try(collectKeyTimesFromController n.controller times)catch()
-                try(collectKeyTimesFromController n.transform.controller times)catch()
-                try(collectKeyTimesFromController n.position.controller times)catch()
-                try(collectKeyTimesFromController n.rotation.controller times)catch()
-                try(collectKeyTimesFromController n.scale.controller times)catch()
-            )
-        )
-
-        if times.count == 0 then
-        (
-            interval fallbackStart fallbackEnd
-        )
+        if p == "" then p
         else
         (
-            local tMin = times[1]
-            local tMax = times[1]
-
-            for t in times do
-            (
-                if t < tMin do tMin = t
-                if t > tMax do tMax = t
-            )
-
-            interval tMin tMax
+            local lastChar = substring p p.count 1
+            if lastChar != "\\" then p + "\\" else p
         )
     )
 
-    fn setupFBXExport startFrame endFrame =
+    fn ensureDir p =
     (
-        try(FBXExporterSetParam "ResetExport")catch()
-
-        try(FBXExporterSetParam "Animation" true)catch()
-        try(FBXExporterSetParam "BakeAnimation" true)catch()
-        try(FBXExporterSetParam "BakeFrameStart" startFrame)catch()
-        try(FBXExporterSetParam "BakeFrameEnd" endFrame)catch()
-        try(FBXExporterSetParam "BakeFrameStep" 1)catch()
-
-        try(FBXExporterSetParam "Cameras" false)catch()
-        try(FBXExporterSetParam "Lights" false)catch()
-        try(FBXExporterSetParam "EmbedTextures" false)catch()
-
-        try(FBXExporterSetParam "SmoothingGroups" true)catch()
-        try(FBXExporterSetParam "SmoothMeshExport" true)catch()
-        try(FBXExporterSetParam "TangentsandBinormals" true)catch()
-        try(FBXExporterSetParam "Preserveinstances" false)catch()
-
-        try(FBXExporterSetParam "SelectionSetExport" false)catch()
+        if not doesDirectoryExist p do makeDir p
     )
 
-    fn exportFBX outFile exportNodes startFrame endFrame =
+    fn getBipedRootNode =
+    (
+        for n in objects where classof n == Biped_Object do
+        (
+            return n.controller.rootnode
+        )
+        undefined
+    )
+
+    fn isBipedObj n =
+    (
+        try(classof n == Biped_Object)catch(false)
+    )
+
+    fn isExtraBoneClass n =
+    (
+        if n == undefined then return false
+
+        if classof n == BoneGeometry then return true
+        if classof n == Dummy then return true
+        if classof n == Point then return true
+
+        false
+    )
+
+    fn isExtraBoneNode n =
+    (
+        if n == undefined then return false
+        if isBipedObj n then return false
+        if matchPattern n.name pattern:(srcPrefix + "*") then return false
+        if matchPattern n.name pattern:(dstTempPrefix + "*") then return false
+
+        isExtraBoneClass n
+    )
+
+    fn collectRigExtraNodes =
+    (
+        local arr = #()
+
+        for n in objects do
+        (
+            if isValidNode n and isExtraBoneNode n do
+            (
+                append arr n
+            )
+        )
+
+        arr
+    )
+
+    fn protectDstExtraNames extraNodes =
+    (
+        -- 导入源FBX前，先临时改名目标披风/布料骨骼，避免FBX导入时同名被Max自动改成 xxx001
+        local records = #()
+
+        for n in extraNodes do
+        (
+            if isValidNode n do
+            (
+                local oldName = n.name
+                append records #(n, oldName)
+                try(n.name = dstTempPrefix + oldName)catch()
+            )
+        )
+
+        records
+    )
+
+    fn restoreDstExtraNames records =
+    (
+        for r in records do
+        (
+            local n = r[1]
+            local oldName = r[2]
+
+            if isValidNode n do
+            (
+                try(n.name = oldName)catch()
+            )
+        )
+    )
+
+    fn markImportedNodes beforeNodes prefix =
+    (
+        local imported = #()
+
+        for n in objects do
+        (
+            if (findItem beforeNodes n) == 0 do
+            (
+                append imported n
+            )
+        )
+
+        for n in imported do
+        (
+            try(n.name = prefix + n.name)catch()
+        )
+
+        imported
+    )
+
+    fn copySameNameExtraAnimWorld importedNodes prefix startF endF =
+    (
+        local copied = 0
+        local skipped = 0
+
+        -- World Transform 直拷：
+        -- 目标：披风/布料骨骼在最终动画里的世界位置/旋转与源FBX一致。
+        for srcNode in importedNodes do
+        (
+            if isValidNode srcNode do
+            (
+                if matchPattern srcNode.name pattern:(prefix + "*") do
+                (
+                    local dstName = substituteString srcNode.name prefix ""
+                    local dstNode = getNodeByName dstName
+
+                    if dstNode != undefined and isExtraBoneNode dstNode then
+                    (
+                        for t = startF to endF do
+                        (
+                            sliderTime = t
+                            at time t with animate on
+                            (
+                                dstNode.transform = srcNode.transform
+                            )
+                        )
+
+                        copied += 1
+                        logMsg ("[COPY WORLD] " + srcNode.name + " -> " + dstNode.name)
+                    )
+                    else
+                    (
+                        skipped += 1
+                        logMsg ("[SKIP] 找不到同名目标Extra骨骼: " + srcNode.name)
+                    )
+                )
+            )
+        )
+
+        #(copied, skipped)
+    )
+
+    fn selectExportNodes =
     (
         clearSelection()
-        select exportNodes
 
-        setupFBXExport startFrame endFrame
-
-        exportFile outFile #noPrompt selectedOnly:true using:FBXEXP
+        for n in objects do
+        (
+            if isValidNode n do
+            (
+                if classof n == Biped_Object or classof n == BoneGeometry or classof n == Dummy or classof n == Point or superclassof n == GeometryClass do
+                (
+                    if not matchPattern n.name pattern:(srcPrefix + "*") do
+                    (
+                        selectMore n
+                    )
+                )
+            )
+        )
     )
 
-    on rolBatchBipToFBX open do
+    fn refreshPairs =
     (
-        spnStart.value = animationRange.start.frame as integer
-        spnEnd.value = animationRange.end.frame as integer
+        arrPairs = #()
+
+        local bipDir = ensureSlash edtBipDir.text
+        local fbxDir = ensureSlash edtFbxDir.text
+
+        local bipFiles = getFiles (bipDir + "*.bip")
+        local listItems = #()
+
+        for bip in bipFiles do
+        (
+            local base = getFilenameFile bip
+            local fbx = fbxDir + base + ".fbx"
+
+            if not doesFileExist fbx do
+            (
+                fbx = fbxDir + base + ".FBX"
+            )
+
+            if doesFileExist fbx then
+            (
+                append arrPairs #(base, bip, fbx)
+                append listItems (base + "    [OK]")
+            )
+            else
+            (
+                append listItems (base + "    [缺少FBX]")
+            )
+        )
+
+        lbFiles.items = listItems
+        logMsg ("刷新完成，匹配成功: " + arrPairs.count as string + " 个")
+    )
+
+    fn processOne pair =
+    (
+        local base = pair[1]
+        local bipFile = pair[2]
+        local srcFbxFile = pair[3]
+        local rigMaxFile = edtRigMax.text
+
+        local outRoot = ensureSlash edtOutDir.text
+        local outMaxDir = outRoot + "MAX\\"
+        local outFbxDir = outRoot + "FBX\\"
+
+        ensureDir outRoot
+        ensureDir outMaxDir
+        ensureDir outFbxDir
+
+        local outMaxFile = outMaxDir + base + ".max"
+        local outFbxFile = outFbxDir + base + ".fbx"
+
+        if chkSkipExist.checked do
+        (
+            if ((not chkSaveMax.checked or doesFileExist outMaxFile) and (not chkExportFbx.checked or doesFileExist outFbxFile)) then
+            (
+                logMsg ("跳过已存在: " + base)
+                return true
+            )
+        )
+
+        logMsg ("开始处理: " + base)
+
+        resetMaxFile #noPrompt
+        loadMaxFile rigMaxFile useFileUnits:true quiet:true
+
+        local bipRoot = getBipedRootNode()
+        if bipRoot == undefined then
+        (
+            logMsg ("ERROR: 未找到 Biped Root: " + base)
+            return false
+        )
+
+        -- 1. 主体动画来自 BIP
+        biped.loadBipFile bipRoot.controller bipFile #noRedraw
+
+        local startF = animationRange.start
+        local endF = animationRange.end
+
+        logMsg ("BIP帧范围: " + startF as string + " - " + endF as string)
+
+        -- 2. 导入源FBX前保护目标Extra骨骼名称，避免同名导入被Max自动改名
+        local dstExtras = collectRigExtraNodes()
+        local dstNameRecords = protectDstExtraNames dstExtras
+
+        local beforeNodes = objects as array
+
+        FbxImporterSetParam "Mode" #merge
+        FbxImporterSetParam "Animation" true
+        FbxImporterSetParam "FillTimeline" false
+        FbxImporterSetParam "BakeAnimationLayers" false
+        FbxImporterSetParam "PointCache" false
+
+        importFile srcFbxFile #noPrompt using:FBXIMP
+
+        -- 帧数始终由BIP决定
+        animationRange = interval startF endF
+
+        -- 3. 导入源节点加SRC_前缀
+        local srcNodes = markImportedNodes beforeNodes srcPrefix
+
+        -- 4. 恢复目标Extra骨骼原名，这样 SRC_xxx 可以找到目标 xxx
+        restoreDstExtraNames dstNameRecords
+
+        -- 5. Extra骨骼动画：World Transform 逐帧直拷
+        local result = copySameNameExtraAnimWorld srcNodes srcPrefix startF endF
+
+        -- 6. 删除源FBX临时节点
+        delete srcNodes
+
+        logMsg ("Extra复制(World): copied=" + result[1] as string + " skipped=" + result[2] as string)
+
+        if chkSaveMax.checked do
+        (
+            saveMaxFile outMaxFile quiet:true
+            logMsg ("保存MAX: " + outMaxFile)
+        )
+
+        if chkExportFbx.checked do
+        (
+            FBXExporterSetParam "Animation" true
+            FBXExporterSetParam "BakeAnimation" true
+            FBXExporterSetParam "BakeResampleAnimation" false
+            FBXExporterSetParam "BakeFrameStart" startF
+            FBXExporterSetParam "BakeFrameEnd" endF
+            FBXExporterSetParam "Cameras" false
+            FBXExporterSetParam "Lights" false
+            FBXExporterSetParam "EmbedTextures" false
+            FBXExporterSetParam "AxisConversionMethod" "None"
+            FBXExporterSetParam "UpAxis" "Y"
+            FBXExporterSetParam "ShowWarnings" true
+            FBXExporterSetParam "GenerateLog" false
+            FBXExporterSetParam "ASCII" false
+
+            selectExportNodes()
+            exportFile outFbxFile #noPrompt selectedOnly:true using:FBXEXP
+            logMsg ("导出FBX: " + outFbxFile)
+        )
+
+        logMsg ("完成: " + base)
+        true
+    )
+
+    on btnPickRig pressed do
+    (
+        local f = getOpenFileName caption:"选择 bip_rig.max" types:"MAX (*.max)|*.max|"
+        if f != undefined do edtRigMax.text = f
     )
 
     on btnPickBip pressed do
     (
-        local p = getSavePath caption:"Pick BIP Folder"
-        if p != undefined do edtBipFolder.text = p
+        local d = getSavePath caption:"选择 BIP 目录"
+        if d != undefined do edtBipDir.text = ensureSlash d
+    )
+
+    on btnPickFbx pressed do
+    (
+        local d = getSavePath caption:"选择 FBX 目录"
+        if d != undefined do edtFbxDir.text = ensureSlash d
     )
 
     on btnPickOut pressed do
     (
-        local p = getSavePath caption:"Pick FBX Output Folder"
-        if p != undefined do edtOutFolder.text = p
+        local d = getSavePath caption:"选择输出目录"
+        if d != undefined do edtOutDir.text = ensureSlash d
+    )
+
+    on btnRefresh pressed do
+    (
+        refreshPairs()
     )
 
     on btnRun pressed do
     (
-        lbLog.items = #()
-
-        local bipFolder = edtBipFolder.text
-        local outFolder = edtOutFolder.text
-        local rootName = edtBipRoot.text
-
-        if bipFolder == "" or not doesDirectoryExist bipFolder then
+        if edtRigMax.text == "" or not doesFileExist edtRigMax.text then
         (
-            messageBox "Please pick BIP folder"
+            messageBox "请先选择有效的 bip_rig.max" title:"ERROR"
             return false
         )
 
-        if outFolder == "" then
+        refreshPairs()
+
+        if arrPairs.count == 0 then
         (
-            outFolder = bipFolder + "\\fbx"
-            edtOutFolder.text = outFolder
-        )
-
-        if not doesDirectoryExist outFolder do makeDir outFolder
-
-        local bipRoot = getNodeByName rootName
-
-        if not isValidNode bipRoot then
-        (
-            messageBox ("Cannot find Biped Root: " + rootName)
+            messageBox "没有匹配到 bip + fbx 文件" title:"ERROR"
             return false
         )
 
-        local bipFiles = getBipFiles bipFolder recursive:chkRecursive.checked
-
-        if bipFiles.count == 0 then
+        for i = 1 to arrPairs.count do
         (
-            messageBox "No .bip files found"
-            return false
+            processOne arrPairs[i]
         )
 
-        local fallbackStart = spnStart.value as integer
-        local fallbackEnd = spnEnd.value as integer
-
-        logMsg ("BIP Count: " + bipFiles.count as string)
-
-        local success = 0
-        local failed = 0
-
-        disableSceneRedraw()
-
-        for bipFile in bipFiles do
-        (
-            try
-            (
-                local name = getFilenameFile bipFile
-                local outFile = outFolder + "\\" + name + ".fbx"
-
-                logMsg "--------------------------------"
-                logMsg ("Load BIP: " + bipFile)
-
-                if loadBipAnim bipRoot bipFile then
-                (
-                    local exportNodes = getAllChildrenUnderRoot bipRoot includeRoot:true
-
-                    logMsg ("Export Nodes: " + exportNodes.count as string)
-
-                    if exportNodes.count == 0 then
-                    (
-                        failed += 1
-                        logMsg "[FAILED] No export nodes"
-                    )
-                    else
-                    (
-                        local bipRange = getAnimRangeFromNodes exportNodes fallbackStart fallbackEnd
-
-                        local realStart = bipRange.start.frame as integer
-                        local realEnd = bipRange.end.frame as integer
-
-                        animationRange = interval realStart realEnd
-                        sliderTime = realStart
-
-                        logMsg ("BIP Real Frame: " + realStart as string + " - " + realEnd as string)
-
-                        exportFBX outFile exportNodes realStart realEnd
-
-                        success += 1
-                        logMsg ("[OK] " + outFile)
-                    )
-                )
-                else
-                (
-                    failed += 1
-                    logMsg "[FAILED] Load BIP failed"
-                )
-            )
-            catch
-            (
-                failed += 1
-                logMsg ("[ERROR] " + bipFile)
-                logMsg (getCurrentException())
-            )
-        )
-
-        enableSceneRedraw()
-
-        logMsg "================================"
-        logMsg ("Success: " + success as string)
-        logMsg ("Failed : " + failed as string)
-
-        messageBox ("Done\nSuccess: " + success as string + "\nFailed: " + failed as string)
+        messageBox "批量处理完成" title:"DONE"
     )
 )
 
-createDialog rolBatchBipToFBX
+createDialog rolBatchBipFbxMerge
