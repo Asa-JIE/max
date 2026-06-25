@@ -1,0 +1,281 @@
+# -*- coding: utf-8 -*-
+import os
+import maya.cmds as cmds
+import maya.mel as mel
+
+
+NAMESPACE = "h3r_hero_Knight_Rig"
+
+GRP_SKELETON = NAMESPACE + ":grp_skeleton"
+ROOT_JOINT = NAMESPACE + ":root"
+
+HORSE_GROUP = NAMESPACE + ":def_spine_horse_cog"
+HERO_GROUP = NAMESPACE + ":def_spine_cog"
+
+WIN_NAME = "batch_export_hero_mounts_fbx_ui"
+
+
+def load_fbx_plugin():
+    if not cmds.pluginInfo("fbxmaya", q=True, loaded=True):
+        cmds.loadPlugin("fbxmaya")
+
+
+def log_msg(msg):
+    print(msg)
+    if cmds.window(WIN_NAME, exists=True):
+        old = cmds.scrollField("txt_log", q=True, text=True)
+        cmds.scrollField("txt_log", e=True, text=old + msg + "\n")
+
+
+def get_all_joints(root_joint):
+    if not cmds.objExists(root_joint):
+        raise RuntimeError("找不到骨骼: %s" % root_joint)
+
+    joints = cmds.listRelatives(root_joint, ad=True, type="joint", fullPath=True) or []
+    joints.append(cmds.ls(root_joint, long=True)[0])
+
+    joints = list(reversed(joints))
+    return joints
+
+
+def get_scene_frame_range():
+    start = cmds.playbackOptions(q=True, min=True)
+    end = cmds.playbackOptions(q=True, max=True)
+    return int(start), int(end)
+
+
+def setup_fbx_export_animation(start, end):
+    mel.eval('FBXExportSmoothingGroups -v true')
+    mel.eval('FBXExportSkins -v true')
+    mel.eval('FBXExportShapes -v true')
+    mel.eval('FBXExportInputConnections -v false')
+
+    mel.eval('FBXExportBakeComplexAnimation -v true')
+    mel.eval('FBXExportBakeComplexStart -v %d' % start)
+    mel.eval('FBXExportBakeComplexEnd -v %d' % end)
+    mel.eval('FBXExportBakeComplexStep -v 1')
+
+    mel.eval('FBXExportAnimationOnly -v false')
+    mel.eval('FBXExportConstraints -v false')
+    mel.eval('FBXExportCameras -v false')
+    mel.eval('FBXExportLights -v false')
+
+
+def import_fbx(fbx_path):
+    load_fbx_plugin()
+
+    cmds.file(new=True, force=True)
+
+    fbx_path = fbx_path.replace("\\", "/")
+    cmds.file(
+        fbx_path,
+        i=True,
+        type="FBX",
+        ignoreVersion=True,
+        ra=True,
+        mergeNamespacesOnClash=False,
+        namespace=":",
+        options="fbx",
+        pr=True
+    )
+
+
+def check_required_nodes():
+    if not cmds.objExists(GRP_SKELETON):
+        raise RuntimeError("找不到 transform: %s" % GRP_SKELETON)
+
+    if cmds.nodeType(GRP_SKELETON) != "transform":
+        raise RuntimeError("%s 不是 transform 类型" % GRP_SKELETON)
+
+    for node in [ROOT_JOINT, HORSE_GROUP, HERO_GROUP]:
+        if not cmds.objExists(node):
+            raise RuntimeError("找不到骨骼节点: %s" % node)
+
+        if cmds.nodeType(node) != "joint":
+            raise RuntimeError("%s 不是 joint 类型" % node)
+
+
+def build_export_names(input_fbx):
+    base = os.path.splitext(os.path.basename(input_fbx))[0]
+
+    mount_name = base.replace("heros", "mounts")
+    hero_name = base.replace("heros", "hero")
+
+    return mount_name + ".fbx", hero_name + ".fbx"
+
+
+def export_joint_group(group_joint, out_path, start, end):
+    joints = get_all_joints(group_joint)
+
+    cmds.select(clear=True)
+    cmds.select(joints, r=True)
+
+    setup_fbx_export_animation(start, end)
+
+    out_path = out_path.replace("\\", "/")
+    mel.eval('FBXExport -f "%s" -s' % out_path)
+
+
+def process_one_fbx(input_fbx, hero_dir, mounts_dir):
+    log_msg("处理: %s" % input_fbx)
+
+    import_fbx(input_fbx)
+    check_required_nodes()
+
+    start, end = get_scene_frame_range()
+
+    mount_file, hero_file = build_export_names(input_fbx)
+
+    mount_out = os.path.join(mounts_dir, mount_file)
+    hero_out = os.path.join(hero_dir, hero_file)
+
+    export_joint_group(HORSE_GROUP, mount_out, start, end)
+    log_msg("  mounts 导出: %s" % mount_out)
+
+    export_joint_group(HERO_GROUP, hero_out, start, end)
+    log_msg("  hero 导出: %s" % hero_out)
+
+    log_msg("  帧范围: %s - %s" % (start, end))
+
+
+def get_fbx_files(folder, recursive=False):
+    result = []
+
+    if recursive:
+        for root, dirs, files in os.walk(folder):
+            for f in files:
+                if f.lower().endswith(".fbx"):
+                    result.append(os.path.join(root, f))
+    else:
+        for f in os.listdir(folder):
+            full = os.path.join(folder, f)
+            if os.path.isfile(full) and f.lower().endswith(".fbx"):
+                result.append(full)
+
+    result.sort()
+    return result
+
+
+def batch_process(input_dir, output_dir, recursive=False):
+    if not os.path.isdir(input_dir):
+        raise RuntimeError("输入目录不存在: %s" % input_dir)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    hero_dir = os.path.join(output_dir, "hero")
+    mounts_dir = os.path.join(output_dir, "mounts")
+
+    if not os.path.exists(hero_dir):
+        os.makedirs(hero_dir)
+
+    if not os.path.exists(mounts_dir):
+        os.makedirs(mounts_dir)
+
+    fbx_files = get_fbx_files(input_dir, recursive)
+
+    if not fbx_files:
+        raise RuntimeError("输入目录没有找到 FBX 文件")
+
+    log_msg("开始批量处理")
+    log_msg("输入目录: %s" % input_dir)
+    log_msg("输出目录: %s" % output_dir)
+    log_msg("FBX数量: %d" % len(fbx_files))
+    log_msg("--------------------------------")
+
+    success = 0
+    failed = 0
+
+    for fbx in fbx_files:
+        try:
+            process_one_fbx(fbx, hero_dir, mounts_dir)
+            success += 1
+            log_msg("[OK] %s" % os.path.basename(fbx))
+        except Exception as e:
+            failed += 1
+            log_msg("[ERROR] %s" % os.path.basename(fbx))
+            log_msg("        %s" % e)
+
+        log_msg("--------------------------------")
+
+    log_msg("批量完成")
+    log_msg("成功: %d" % success)
+    log_msg("失败: %d" % failed)
+
+
+def pick_input_dir(*args):
+    result = cmds.fileDialog2(fileMode=3, caption="选择输入 FBX 文件夹")
+    if result:
+        cmds.textFieldButtonGrp("txt_input_dir", e=True, text=result[0])
+
+
+def pick_output_dir(*args):
+    result = cmds.fileDialog2(fileMode=3, caption="选择输出目录")
+    if result:
+        cmds.textFieldButtonGrp("txt_output_dir", e=True, text=result[0])
+
+
+def run_batch_from_ui(*args):
+    input_dir = cmds.textFieldButtonGrp("txt_input_dir", q=True, text=True)
+    output_dir = cmds.textFieldButtonGrp("txt_output_dir", q=True, text=True)
+    recursive = cmds.checkBox("chk_recursive", q=True, value=True)
+
+    cmds.scrollField("txt_log", e=True, text="")
+
+    try:
+        batch_process(input_dir, output_dir, recursive)
+    except Exception as e:
+        log_msg("[FATAL] %s" % e)
+
+
+def show_ui():
+    if cmds.window(WIN_NAME, exists=True):
+        cmds.deleteUI(WIN_NAME)
+
+    cmds.window(WIN_NAME, title="Batch Export Hero / Mounts FBX", widthHeight=(620, 420))
+
+    cmds.columnLayout(adjustableColumn=True, rowSpacing=8)
+
+    cmds.text(label="批量拆分 Hero / Mounts 动画 FBX", align="center", height=28)
+
+    cmds.textFieldButtonGrp(
+        "txt_input_dir",
+        label="输入FBX目录",
+        buttonLabel="选择",
+        text="",
+        columnWidth=[(1, 90), (2, 430), (3, 70)],
+        buttonCommand=pick_input_dir
+    )
+
+    cmds.textFieldButtonGrp(
+        "txt_output_dir",
+        label="输出目录",
+        buttonLabel="选择",
+        text="",
+        columnWidth=[(1, 90), (2, 430), (3, 70)],
+        buttonCommand=pick_output_dir
+    )
+
+    cmds.checkBox(
+        "chk_recursive",
+        label="递归处理子目录",
+        value=False
+    )
+
+    cmds.button(
+        label="开始批量处理",
+        height=36,
+        command=run_batch_from_ui
+    )
+
+    cmds.scrollField(
+        "txt_log",
+        editable=False,
+        wordWrap=False,
+        height=240
+    )
+
+    cmds.showWindow(WIN_NAME)
+
+
+show_ui()
