@@ -1,0 +1,1045 @@
+/*
+ * Asa Skin Biped Builder v8
+ * 3ds Max 2020
+ *
+ * 当前版本只保留：
+ * 1. 加载 .list 映射
+ * 2. 保存 .list 映射
+ * 3. 验证映射
+ * 4. 生成 Skin Biped
+ *
+ * 已删除/不再包含：
+ * - 旧动画重定向 Tab2
+ * - RTHelper / Mapping.max / FixLimb
+ * - 批量动画导出
+ * - 轴向设置/Helper工具/高级选项
+ *
+ * 主流程：
+ * FBX 主体骨 -> Biped
+ * 附加骨保留并挂接
+ * Skin: OldBone_* -> Biped 临时改名骨
+ * Skin 权重恢复后，Biped 名称恢复为 Bip001 Pelvis / Bip001 L Hand 等原名
+ */
+
+try(destroyDialog rolAsaSkinBipedBuilder)catch()
+
+rollout rolAsaSkinBipedBuilder "Asa Skin Biped Builder" width:655 height:648
+(
+    local winW = 655
+    local margin = 8
+    local listW = 117
+    local rightPanelX = 485
+    local rightPanelW = 162
+    local btnWidth = 150
+    local listH = 37
+
+    local mappingCheckState = false
+    local AsaSkinPatchMappedFbxNames = #()
+    local AsaSkinPatchBipRestorePairs = #()
+
+    local pathMappingListPreset = ((getDir #scripts) + "\\BulletScripts\\Res\\BsMappingList\\")
+    local fileMappingList = undefined
+
+    local arrBipA = #(
+        "Bip001",
+        "Pelvis",
+        "Spine",
+        "Spine1",
+        "[可选]Spine2",
+        "[可选]Spine3",
+        "[可选]Spine4",
+        "Neck",
+        "[可选]Neck1",
+        "Head",
+        "HeadNub",
+        "L Thigh",
+        "L Calf",
+        "L Foot",
+        "L Toe0",
+        "L Toe0Nub",
+        "R Thigh",
+        "R Calf",
+        "R Foot",
+        "R Toe0",
+        "R Toe0Nub",
+        "L Clavicle",
+        "L UpperArm",
+        "L Forearm",
+        "L Hand",
+        "[可选]L Finger0",
+        "[可选]L Finger01",
+        "[可选]L Finger02",
+        "[可选]L Finger0Nub",
+        "[可选]L Finger1",
+        "[可选]L Finger11",
+        "[可选]L Finger12",
+        "[可选]L Finger1Nub",
+        "[可选]L Finger2",
+        "[可选]L Finger21",
+        "[可选]L Finger22",
+        "[可选]L Finger2Nub"
+    )
+
+    local arrBipB = #(
+        "[可选]L Finger3",
+        "[可选]L Finger31",
+        "[可选]L Finger32",
+        "[可选]L Finger3Nub",
+        "[可选]L Finger4",
+        "[可选]L Finger41",
+        "[可选]L Finger42",
+        "[可选]L Finger4Nub",
+        "R Clavicle",
+        "R UpperArm",
+        "R Forearm",
+        "R Hand",
+        "[可选]R Finger0",
+        "[可选]R Finger01",
+        "[可选]R Finger02",
+        "[可选]R Finger0Nub",
+        "[可选]R Finger1",
+        "[可选]R Finger11",
+        "[可选]R Finger12",
+        "[可选]R Finger1Nub",
+        "[可选]R Finger2",
+        "[可选]R Finger21",
+        "[可选]R Finger22",
+        "[可选]R Finger2Nub",
+        "[可选]R Finger3",
+        "[可选]R Finger31",
+        "[可选]R Finger32",
+        "[可选]R Finger3Nub",
+        "[可选]R Finger4",
+        "[可选]R Finger41",
+        "[可选]R Finger42",
+        "[可选]R Finger4Nub"
+    )
+
+    local arrEmptyA = for i = 1 to arrBipA.count collect "~undefined~"
+    local arrEmptyB = for i = 1 to arrBipB.count collect "~undefined~"
+
+    dotNetControl lblTitle "Label" text:"Asa Skin Biped Builder：加载映射 -> 验证映射 -> 生成 Skin Biped" pos:[10,3] width:625 height:20
+
+    dotNetControl lblPreset "Label" text:"映射列表 .list：" pos:[margin,36] width:110 height:18
+    dropdownList ddlPreset "" pos:[118,34] width:265 height:20 items:#() selection:1
+    button btnApplyList "应用预设" pos:[388,34] width:82 height:20 tooltip:"从预设目录加载当前下拉列表选择的 .list"
+
+    dotNetControl lblCurrentFile "Label" text:"当前文件：未加载" pos:[margin,61] width:462 height:18
+
+    listbox bipedBones "Bip 节点 1-37" pos:[margin,88] height:listH width:listW selection:0 items:arrBipA
+    listbox characterBones "Bone 骨骼 1-37" pos:[margin+listW+2,88] height:listH width:listW items:arrEmptyA selection:0
+    listbox bipedBones_B "Bip 节点 38-69" pos:[margin+listW*2+4,88] height:listH width:listW selection:0 items:arrBipB
+    listbox characterBones_B "Bone 骨骼 38-69" pos:[margin+listW*3+6,88] height:listH width:listW items:arrEmptyB selection:0
+
+    groupbox grpOps "操作" pos:[rightPanelX,88] width:rightPanelW height:190
+    button loadDialogue "1.加载列表" pos:[rightPanelX+5,112] width:72 height:24 tooltip:"加载 .list 映射文件"
+    button saveDialogue "保存列表" pos:[rightPanelX+80,112] width:72 height:24 tooltip:"保存当前映射到 .list"
+    button validateButton "2.验证映射" pos:[rightPanelX+5,144] width:btnWidth height:32 tooltip:"验证 FBX 主体骨和 Biped 节点是否能找到"
+    button btnBuildSkinBiped "3.生成 Skin Biped" pos:[rightPanelX+5,184] width:btnWidth height:42 tooltip:"主体骨替换、附加骨挂接、Skin 权重替换、恢复 Biped 名称"
+
+    groupbox grpLog "日志" pos:[rightPanelX,292] width:rightPanelW height:302
+    listbox lbLog "" pos:[rightPanelX+5,312] width:btnWidth height:17 items:#()
+
+    progressbar pgbBar "" pos:[margin,610] width:(winW-55) height:16 color:blue
+    label lblBarValue "0 %" pos:[winW-44,608] height:18 width:40
+
+    fn logMsg msg =
+    (
+        local arr = lbLog.items
+        append arr (msg as string)
+        while arr.count > 80 do deleteItem arr 1
+        lbLog.items = arr
+        lbLog.selection = arr.count
+        format "%\n" msg
+    )
+
+    fn fnRefreshMappingFile =
+    (
+        local arrMappingFile = #()
+        local arrMappingFileName = #()
+
+        if ((pathMappingListPreset != "") and (doesDirectoryExist pathMappingListPreset)) do
+        (
+            arrMappingFile = getfiles (pathMappingListPreset + "*.list")
+            arrMappingFileName = for i in arrMappingFile collect (getFilenameFile i)
+        )
+
+        ddlPreset.items = arrMappingFileName
+        arrMappingFile
+    )
+
+    fn fnCleanUiName s =
+    (
+        if s == undefined then return ""
+        local n = trimLeft (trimRight (s as string))
+        n = substituteString n "[可选]" ""
+        n = trimLeft (trimRight n)
+        n
+    )
+
+    fn fnIsValidUiName s =
+    (
+        local n = fnCleanUiName s
+        if n == "" then return false
+        if n == "~undefined~" then return false
+        true
+    )
+
+    fn fnIsOptionalNodeIndex idx =
+    (
+        -- 可选 Spine / Neck
+        if idx >= 5 and idx <= 9 and idx != 8 then return true
+
+        -- Nub / End 节点：不参与主体 Skin 替换时不能阻断流程
+        if idx == 11 then return true     -- HeadNub
+        if idx == 16 then return true     -- L Toe0Nub
+        if idx == 21 then return true     -- R Toe0Nub
+
+        -- 手指与手指 Nub
+        if idx >= 26 and idx <= 45 then return true
+        if idx >= 50 and idx <= 69 then return true
+
+        false
+    )
+
+    fn fnGetUiFbxName idx =
+    (
+        local v = "~undefined~"
+
+        if idx <= 37 then
+        (
+            if idx <= characterBones.items.count do v = characterBones.items[idx]
+        )
+        else
+        (
+            local j = idx - 37
+            if j <= characterBones_B.items.count do v = characterBones_B.items[j]
+        )
+
+        fnCleanUiName v
+    )
+
+    fn fnGetUiBipShortName idx =
+    (
+        local v = ""
+
+        if idx <= 37 then
+        (
+            if idx <= bipedBones.items.count do v = bipedBones.items[idx]
+        )
+        else
+        (
+            local j = idx - 37
+            if j <= bipedBones_B.items.count do v = bipedBones_B.items[j]
+        )
+
+        fnCleanUiName v
+    )
+
+    fn fnGetBipedRootName =
+    (
+        local rootName = "Bip001"
+        try
+        (
+            local uiRoot = fnCleanUiName bipedBones.items[1]
+            if uiRoot != "" do rootName = uiRoot
+        )catch()
+        rootName
+    )
+
+    fn fnFindBipedNodeByUiName bipShortName =
+    (
+        local shortName = fnCleanUiName bipShortName
+        if shortName == "" then return undefined
+
+        local rootName = fnGetBipedRootName()
+
+        local candidates = #(
+            rootName + " " + shortName,
+            rootName + "_" + shortName,
+            shortName
+        )
+
+        for n in candidates do
+        (
+            local node = getNodeByName n
+            if isValidNode node do return node
+        )
+
+        undefined
+    )
+
+    fn fnLoadMappingList f =
+    (
+        if (f == undefined) or (not doesFileExist f) then
+        (
+            messageBox "映射文件不存在。" title:"Asa Skin Biped Builder"
+            return false
+        )
+
+        local fs = openFile f mode:"r"
+        if fs == undefined then
+        (
+            messageBox "无法打开映射文件。" title:"Asa Skin Biped Builder"
+            return false
+        )
+
+        local i = 1
+        while (eof fs) == false do
+        (
+            local newValue = readLine fs
+
+            if i <= 37 then
+            (
+                local a = characterBones.items
+                if i <= a.count do a[i] = newValue
+                characterBones.items = a
+            )
+            else if i <= 69 then
+            (
+                local b = characterBones_B.items
+                local j = i - 37
+                if j <= b.count do b[j] = newValue
+                characterBones_B.items = b
+            )
+
+            i += 1
+        )
+
+        close fs
+        fileMappingList = f
+        lblCurrentFile.text = "当前文件：" + f
+        mappingCheckState = false
+        logMsg ("加载列表: " + f)
+        true
+    )
+
+    fn fnSaveMappingList f =
+    (
+        if f == undefined then return false
+
+        local outFile = undefined
+        if doesFileExist f then outFile = openFile f mode:"w" else outFile = createFile f
+        if outFile == undefined then return false
+
+        for i = 1 to characterBones.items.count do format "%\n" characterBones.items[i] to:outFile
+        for i = 1 to characterBones_B.items.count do format "%\n" characterBones_B.items[i] to:outFile
+
+        -- 兼容旧 list 格式：继续写 Root 和 6 个轴向占位值。
+        format "%\n" (fnGetUiFbxName 1) to:outFile
+        for i = 1 to 6 do format "3\n" to:outFile
+
+        close outFile
+        fileMappingList = f
+        lblCurrentFile.text = "当前文件：" + f
+        true
+    )
+
+    fn fnValidateMapping =
+    (
+        mappingCheckState = true
+        local missing = #()
+        local warnings = #()
+        local pairCount = 0
+
+        for idx = 2 to 69 do
+        (
+            local fbxName = fnGetUiFbxName idx
+            local bipName = fnGetUiBipShortName idx
+
+            if (fnIsValidUiName fbxName) and (fnIsValidUiName bipName) then
+            (
+                local fbxNode = getNodeByName fbxName
+                local bipNode = fnFindBipedNodeByUiName bipName
+                local info = ("idx:" + (idx as string) + " | FBX:" + fbxName + " | BIP:" + ((fnGetBipedRootName()) + " " + bipName))
+
+                if (isValidNode fbxNode) and (isValidNode bipNode) then
+                (
+                    pairCount += 1
+                )
+                else
+                (
+                    if fnIsOptionalNodeIndex idx then
+                        append warnings info
+                    else
+                        append missing info
+                )
+            )
+            else
+            (
+                local info = ("idx:" + (idx as string) + " | 映射为空")
+
+                if fnIsOptionalNodeIndex idx then
+                    append warnings info
+                else
+                    append missing info
+            )
+        )
+
+        if missing.count > 0 then
+        (
+            mappingCheckState = false
+            logMsg ("验证失败，必需映射缺失数量: " + (missing.count as string))
+            local msg = "验证失败，以下必需映射没有找到：\r\n\r\n"
+            for i = 1 to missing.count where i <= 20 do msg += (missing[i] + "\r\n")
+            if missing.count > 20 do msg += ("... 还有 " + ((missing.count - 20) as string) + " 条\r\n")
+
+            if warnings.count > 0 do
+            (
+                msg += "\r\n可选节点未找到，已忽略：\r\n"
+                for i = 1 to warnings.count where i <= 10 do msg += (warnings[i] + "\r\n")
+                if warnings.count > 10 do msg += ("... 还有 " + ((warnings.count - 10) as string) + " 条可选节点\r\n")
+            )
+
+            messageBox msg title:"Asa Skin Biped Builder"
+            false
+        )
+        else
+        (
+            mappingCheckState = true
+            logMsg ("验证通过，有效映射数量: " + (pairCount as string) + "，可选跳过数量: " + (warnings.count as string))
+
+            local msg = "验证通过。\r\n"
+            msg += ("有效映射数量: " + (pairCount as string) + "\r\n")
+            msg += ("可选跳过数量: " + (warnings.count as string) + "\r\n")
+
+            if warnings.count > 0 do
+            (
+                msg += "\r\n以下可选节点未找到，生成时会自动跳过：\r\n"
+                for i = 1 to warnings.count where i <= 12 do msg += (warnings[i] + "\r\n")
+                if warnings.count > 12 do msg += ("... 还有 " + ((warnings.count - 12) as string) + " 条可选节点\r\n")
+            )
+
+            messageBox msg title:"Asa Skin Biped Builder"
+            true
+        )
+    )
+
+    fn getSkin tempNode =
+    (
+        if not (isValidNode tempNode) then return undefined
+        local sk = undefined
+        for m in tempNode.modifiers while sk == undefined where isKindOf m Skin do sk = m
+        sk
+    )
+
+    fn collectSkinBones sk =
+    (
+        for b in (refs.dependson sk) where isValidNode b collect b
+    )
+
+    fn fnCollectMappedPairs =
+    (
+        local result = #()
+
+        for idx = 2 to 69 do
+        (
+            local fbxName = fnGetUiFbxName idx
+            local bipShortName = fnGetUiBipShortName idx
+
+            if (fnIsValidUiName fbxName) and (fnIsValidUiName bipShortName) do
+            (
+                local fbxBone = getNodeByName fbxName
+                local bipBone = fnFindBipedNodeByUiName bipShortName
+                local bipSearchName = (fnGetBipedRootName()) + " " + bipShortName
+
+                format "[Asa Skin Pair] idx:%  FBX:% -> %  BIP:% -> %\n" idx fbxName fbxBone bipSearchName bipBone
+
+                if (isValidNode fbxBone) and (isValidNode bipBone) do
+                (
+                    append result #(idx, fbxBone, bipBone, fbxName, bipBone.name)
+                )
+            )
+        )
+
+        result
+    )
+
+    fn fnBuildMappedFbxNameSet pairs =
+    (
+        AsaSkinPatchMappedFbxNames = #()
+        for p in pairs do appendIfUnique AsaSkinPatchMappedFbxNames p[4]
+        AsaSkinPatchMappedFbxNames.count
+    )
+
+    fn fnClearBipedRestoreList =
+    (
+        AsaSkinPatchBipRestorePairs = #()
+        ok
+    )
+
+    fn fnAddBipedRestorePair bipNode originalName =
+    (
+        if (isValidNode bipNode) and (originalName != undefined) do append AsaSkinPatchBipRestorePairs #(bipNode, originalName as string)
+        ok
+    )
+
+    fn fnRestoreBipedOriginalNames =
+    (
+        local count = 0
+        for p in AsaSkinPatchBipRestorePairs do
+        (
+            local bipNode = p[1]
+            local originalName = p[2]
+            if (isValidNode bipNode) and (originalName != undefined) do
+            (
+                try
+                (
+                    bipNode.name = originalName
+                    count += 1
+                )catch()
+            )
+        )
+        count
+    )
+
+    fn fnIsMainMappedBoneName boneName =
+    (
+        if boneName == undefined then return false
+        local n = boneName as string
+        if matchPattern n pattern:"OldBone_*" do n = substituteString n "OldBone_" ""
+        (findItem AsaSkinPatchMappedFbxNames n) > 0
+    )
+
+    fn fnCollectSkinMeshes =
+    (
+        local result = #()
+        for g in objects as array where ((superclassof g == GeometryClass) and ((getSkin g) != undefined)) do append result g
+        result
+    )
+
+    fn fnSaveSkinEnvelopes skinMeshes =
+    (
+        local result = #()
+
+        for i = 1 to skinMeshes.count do
+        (
+            local meshNode = skinMeshes[i]
+            local meshSkin = getSkin meshNode
+
+            if meshSkin != undefined do
+            (
+                select meshNode
+                max modify mode
+                modPanel.setCurrentObject meshSkin
+
+                local safeName = substituteString meshNode.name ":" "_"
+                safeName = substituteString safeName "/" "_"
+                safeName = substituteString safeName "\\" "_"
+
+                local envFile = ((getDir #temp) + "\\" + safeName + "_AsaSkin_" + (i as string) + ".env")
+                try(deleteFile envFile)catch()
+                skinOps.saveEnvelope meshSkin envFile
+                append result #(meshNode, envFile)
+            )
+        )
+
+        result
+    )
+
+    fn fnCleanupSkinEnvelopeFiles skinData =
+    (
+        for d in skinData do try(if doesFileExist d[2] do deleteFile d[2])catch()
+    )
+
+    fn fnReparentExtraChildren fbxBone bipBone =
+    (
+        local count = 0
+        if not (isValidNode fbxBone) then return count
+        if not (isValidNode bipBone) then return count
+
+        local arrChildren = for c in fbxBone.children where isValidNode c collect c
+
+        for c in arrChildren do
+        (
+            if not (fnIsMainMappedBoneName c.name) do
+            (
+                local keepTM = c.transform
+                c.parent = bipBone
+                c.transform = keepTM
+                count += 1
+            )
+        )
+
+        count
+    )
+
+    fn fnReplaceOneMappedBone pairData =
+    (
+        local result = #(false, 0, "")
+        local idx = pairData[1]
+        local fbxBone = pairData[2]
+        local bipBone = pairData[3]
+        local fbxName = pairData[4]
+        local bipOriginalName = pairData[5]
+
+        if not (isValidNode fbxBone) then
+        (
+            result[3] = "FBX bone invalid idx " + (idx as string)
+            return result
+        )
+
+        if not (isValidNode bipBone) then
+        (
+            result[3] = "Biped bone invalid idx " + (idx as string)
+            return result
+        )
+
+        if matchPattern fbxBone.name pattern:"OldBone_*" then
+        (
+            result[3] = "skip already renamed: " + fbxBone.name
+            return result
+        )
+
+        local extraCount = fnReparentExtraChildren fbxBone bipBone
+
+        try
+        (
+            fnAddBipedRestorePair bipBone bipOriginalName
+
+            fbxBone.name = "OldBone_" + fbxName
+            bipBone.name = fbxName
+
+            result[1] = true
+            result[2] = extraCount
+            result[3] = "OK idx " + (idx as string) + " : " + fbxName
+        )
+        catch
+        (
+            result[3] = "rename failed idx " + (idx as string) + " : " + fbxName
+        )
+
+        result
+    )
+
+    fn fnBuildBipedAndExtraBonesFromList =
+    (
+        fnClearBipedRestoreList()
+
+        local pairs = fnCollectMappedPairs()
+        fnBuildMappedFbxNameSet pairs
+
+        local okCount = 0
+        local extraCount = 0
+        local logs = #()
+
+        for p in pairs do
+        (
+            local r = fnReplaceOneMappedBone p
+            if r[1] then okCount += 1
+            extraCount += r[2]
+            append logs r[3]
+        )
+
+        #(okCount, extraCount, logs)
+    )
+
+    fn getTargetPair node =
+    (
+        if not (isValidNode node) then return undefined
+        if not (matchPattern node.name pattern:"OldBone_*") then return undefined
+
+        local targetName = substituteString node.name "OldBone_" ""
+        getNodeByName targetName
+    )
+
+    fn xchangeSkinBone sk source target =
+    (
+        local result = off
+
+        if sk == modPanel.getCurrentObject() and isKindOf sk Skin do
+        (
+            local bones = collectSkinBones sk
+            local sid = findItem bones source
+
+            if sid > 0 do
+            (
+                local targetAlreadyInSkin = ((findItem bones target) > 0)
+                skinOps.removeBone sk sid
+                if not targetAlreadyInSkin do skinOps.addBone sk target 0
+                result = on
+            )
+        )
+
+        result
+    )
+
+    fn xchangeSkin node =
+    (
+        local sk = getSkin node
+        if sk == undefined then return 0
+
+        select node
+        max modify mode
+        modPanel.setCurrentObject sk
+
+        local count = 0
+        local bones = collectSkinBones sk
+
+        for source in bones do
+        (
+            local target = getTargetPair source
+            if target != undefined do
+            (
+                if xchangeSkinBone sk source target do count += 1
+            )
+        )
+
+        count
+    )
+
+    fn setUICheckboxState hwnd state =
+    (
+        local BN_CLICKED = 0
+        local BM_SETCHECK = 241
+        local WM_COMMAND = 273
+
+        local parent = UIAccessor.getParentWindow hwnd
+        local id = UIAccessor.getWindowResourceID hwnd
+        windows.sendMessage hwnd BM_SETCHECK state 0
+        windows.sendMessage parent WM_COMMAND ((bit.shift BN_CLICKED 16) + id) hwnd
+        ok
+    )
+
+    fn confirmLoadEnvelopes removeIncomingPrefix:0 removeCurrentPrefix:0 =
+    (
+        local hwnd = dialogMonitorOps.getWindowHandle()
+
+        if (uiAccessor.getWindowText hwnd == "Load Envelopes") then
+        (
+            local children = windows.getChildrenHWND hwnd
+
+            for child in children do
+            (
+                if (child[5] == "Remove Incoming Prefix") then
+                (
+                    setUICheckboxState child[1] removeIncomingPrefix
+                )
+                else if (child[5] == "Remove Current Prefix") then
+                (
+                    setUICheckboxState child[1] removeCurrentPrefix
+                )
+            )
+
+            UIAccessor.PressButtonByName hwnd "Match by Name"
+            UIAccessor.PressButtonByName hwnd "Match by Name"
+            UIAccessor.PressButtonByName hwnd "Match by Name"
+            forceCompleteRedraw()
+            UIAccessor.PressButtonByName hwnd "OK"
+        )
+
+        true
+    )
+
+    fn confTT = (confirmLoadEnvelopes removeIncomingPrefix:1 removeCurrentPrefix:1)
+    fn confTF = (confirmLoadEnvelopes removeIncomingPrefix:1 removeCurrentPrefix:0)
+    fn confFT = (confirmLoadEnvelopes removeIncomingPrefix:0 removeCurrentPrefix:1)
+    fn confFF = (confirmLoadEnvelopes removeIncomingPrefix:0 removeCurrentPrefix:0)
+
+    fn fnLoadEnvelope theSkin envFile removeIncomingPrefix:false removeCurrentPrefix:false =
+    (
+        local confirmFn = case of
+        (
+            (removeIncomingPrefix and removeCurrentPrefix):confTT
+            (removeIncomingPrefix and not removeCurrentPrefix):confTF
+            (not removeIncomingPrefix and removeCurrentPrefix):confFT
+            (not removeIncomingPrefix and not removeCurrentPrefix):confFF
+        )
+
+        DialogMonitorOps.Enabled = true
+        DialogMonitorOps.RegisterNotification confirmFn id:#pressSkinOK
+        skinOps.LoadEnvelope theSkin envFile
+        DialogMonitorOps.unRegisterNotification id:#pressSkinOK
+        DialogMonitorOps.Enabled = false
+
+        ok
+    )
+
+    fn fnReloadSkinEnvelopesAndReplace skinData =
+    (
+        local totalReplace = 0
+
+        for d in skinData do
+        (
+            local meshNode = d[1]
+            local envFile = d[2]
+
+            if isValidNode meshNode do
+            (
+                local meshSkin = getSkin meshNode
+
+                if meshSkin != undefined do
+                (
+                    select meshNode
+                    max modify mode
+                    modPanel.setCurrentObject meshSkin
+
+                    totalReplace += xchangeSkin meshNode
+
+                    if doesFileExist envFile do
+                    (
+                        fnLoadEnvelope meshSkin envFile
+                        try(deleteFile envFile)catch()
+                    )
+                )
+            )
+        )
+
+        totalReplace
+    )
+
+    fn fnFindSkinOldBoneRefs =
+    (
+        local result = #()
+        local skinMeshes = fnCollectSkinMeshes()
+
+        for meshNode in skinMeshes do
+        (
+            local sk = getSkin meshNode
+
+            if sk != undefined do
+            (
+                local bones = collectSkinBones sk
+
+                for b in bones where (isValidNode b and matchPattern b.name pattern:"OldBone_*") do
+                (
+                    append result (meshNode.name + " -> " + b.name)
+                )
+            )
+        )
+
+        result
+    )
+
+    fn fnHideOldBones =
+    (
+        local count = 0
+
+        for o in objects where (isValidNode o and matchPattern o.name pattern:"OldBone_*") do
+        (
+            o.isHidden = true
+            count += 1
+        )
+
+        count
+    )
+
+    fn fnBuildSkinBiped =
+    (
+        if not mappingCheckState then
+        (
+            messageBox "请先点击【2.验证映射】并通过检查。" title:"Asa Skin Biped Builder"
+            return undefined
+        )
+
+        pgbBar.color = green
+        pgbBar.value = 0
+        lblBarValue.text = "0 %"
+
+        local bipRoot = fnFindBipedNodeByUiName "Pelvis"
+        if bipRoot == undefined do bipRoot = getNodeByName (fnGetBipedRootName())
+
+        if bipRoot == undefined then
+        (
+            messageBox "未找到 Biped，请确认场景中存在 Bip001 / Bip001 Pelvis。" title:"Asa Skin Biped Builder"
+            return undefined
+        )
+
+        try
+        (
+            local rootObj = getNodeByName (fnGetBipedRootName())
+            if rootObj != undefined do rootObj.transform.controller.figureMode = false
+        )catch()
+
+        local skinMeshes = fnCollectSkinMeshes()
+        local skinData = fnSaveSkinEnvelopes skinMeshes
+        pgbBar.value = 20
+        lblBarValue.text = "20 %"
+
+        local buildResult = fnBuildBipedAndExtraBonesFromList()
+        local mainReplaceCount = buildResult[1]
+        local extraReparentCount = buildResult[2]
+        pgbBar.value = 55
+        lblBarValue.text = "55 %"
+
+        if mainReplaceCount == 0 then
+        (
+            fnCleanupSkinEnvelopeFiles skinData
+            messageBox "主体骨替换数量为 0，停止 Skin 替换。请检查 UI 映射和 Biped 真实节点名。" title:"Asa Skin Biped Builder"
+            return undefined
+        )
+
+        local skinReplaceCount = fnReloadSkinEnvelopesAndReplace skinData
+
+        local bipRestoreCount = fnRestoreBipedOriginalNames()
+        pgbBar.value = 85
+        lblBarValue.text = "85 %"
+
+        local oldRefs = fnFindSkinOldBoneRefs()
+        local oldHideCount = fnHideOldBones()
+
+        pgbBar.value = 100
+        lblBarValue.text = "100 %"
+
+        local msg = "生成 Skin Biped 完成。\r\n\r\n"
+        msg += ("主体骨替换数量: " + (mainReplaceCount as string) + "\r\n")
+        msg += ("附加骨挂接数量: " + (extraReparentCount as string) + "\r\n")
+        msg += ("Skin 骨骼替换数量: " + (skinReplaceCount as string) + "\r\n")
+        msg += ("恢复 Biped 名称数量: " + (bipRestoreCount as string) + "\r\n")
+        msg += ("隐藏 OldBone 数量: " + (oldHideCount as string) + "\r\n")
+
+        if oldRefs.count > 0 then
+        (
+            msg += "\r\n警告：以下 Mesh 的 Skin 仍引用 OldBone_*，请检查：\r\n"
+            for i = 1 to oldRefs.count where i <= 12 do msg += (oldRefs[i] + "\r\n")
+            if oldRefs.count > 12 do msg += ("... 还有 " + ((oldRefs.count - 12) as string) + " 条\r\n")
+        )
+        else
+        (
+            msg += "\r\n检查通过：Skin 中没有 OldBone_* 残留引用。\r\n"
+        )
+
+        logMsg "生成 Skin Biped 完成"
+        messageBox msg title:"Asa Skin Biped Builder"
+    )
+
+    on rolAsaSkinBipedBuilder open do
+    (
+        try(lblTitle.font = dotNetObject "System.Drawing.Font" "Microsoft YaHei UI" 9.0)catch()
+        try(lblTitle.BackColor = (dotNetClass "System.Drawing.Color").FromArgb 220 230 240)catch()
+        try(lblTitle.ForeColor = (dotNetClass "System.Drawing.Color").FromArgb 50 80 120)catch()
+        fnRefreshMappingFile()
+        logMsg "Asa Skin Biped Builder v8 ready."
+    )
+
+    on btnApplyList pressed do
+    (
+        local arrFiles = fnRefreshMappingFile()
+
+        if ddlPreset.selection > 0 and ddlPreset.selection <= arrFiles.count then
+        (
+            fnLoadMappingList arrFiles[ddlPreset.selection]
+        )
+        else
+        (
+            messageBox "没有可用预设。" title:"Asa Skin Biped Builder"
+        )
+    )
+
+    on loadDialogue pressed do
+    (
+        pgbBar.value = 0
+        lblBarValue.text = "0 %"
+
+        local tempdir = if ((maxFilePath != "") and (doesDirectoryExist maxFilePath)) then maxFilePath else (getDir #scripts)
+        local f = getOpenFileName caption:"Load Skeleton Mapping:" filename:tempdir types:"Mapping List (*.list)|*.list|"
+
+        if f != undefined do fnLoadMappingList f
+    )
+
+    on saveDialogue pressed do
+    (
+        local tempdir = if ((maxFilePath != "") and (doesDirectoryExist maxFilePath)) then maxFilePath else (getDir #scripts)
+        local f = getSaveFileName caption:"Save Skeleton Mapping:" initialDir:tempdir filename:"mapping.list" types:"Mapping List (*.list)|*.list|"
+
+        if f != undefined do
+        (
+            if fnSaveMappingList f then
+            (
+                logMsg ("保存列表: " + f)
+                messageBox "保存成功。" title:"Asa Skin Biped Builder"
+            )
+            else
+            (
+                messageBox "保存失败。" title:"Asa Skin Biped Builder"
+            )
+        )
+    )
+
+    on validateButton pressed do
+    (
+        fnValidateMapping()
+    )
+
+    on btnBuildSkinBiped pressed do
+    (
+        fnBuildSkinBiped()
+    )
+
+    on bipedBones selected nameIndex do
+    (
+        local fbxName = fnGetUiFbxName nameIndex
+        if fnIsValidUiName fbxName do try(select (getNodeByName fbxName))catch()
+    )
+
+    on bipedBones_B selected nameIndex do
+    (
+        local idx = nameIndex + 37
+        local fbxName = fnGetUiFbxName idx
+        if fnIsValidUiName fbxName do try(select (getNodeByName fbxName))catch()
+    )
+
+    on characterBones selected nameIndex do
+    (
+        if $ != undefined and (selection as array).count == 1 then
+        (
+            local a = characterBones.items
+            a[nameIndex] = $.name
+            characterBones.items = a
+            mappingCheckState = false
+        )
+        else
+        (
+            messageBox "只能填入一个有效骨骼节点。" title:"Asa Skin Biped Builder"
+        )
+    )
+
+    on characterBones rightclick nameIndex do
+    (
+        local a = characterBones.items
+        a[nameIndex] = "~undefined~"
+        characterBones.items = a
+        mappingCheckState = false
+    )
+
+    on bipedBones rightclick nameIndex do
+    (
+        local a = characterBones.items
+        a[nameIndex] = "~undefined~"
+        characterBones.items = a
+        mappingCheckState = false
+    )
+
+    on characterBones_B selected nameIndex do
+    (
+        if $ != undefined and (selection as array).count == 1 then
+        (
+            local b = characterBones_B.items
+            b[nameIndex] = $.name
+            characterBones_B.items = b
+            mappingCheckState = false
+        )
+        else
+        (
+            messageBox "只能填入一个有效骨骼节点。" title:"Asa Skin Biped Builder"
+        )
+    )
+
+    on characterBones_B rightclick nameIndex do
+    (
+        local b = characterBones_B.items
+        b[nameIndex] = "~undefined~"
+        characterBones_B.items = b
+        mappingCheckState = false
+    )
+
+    on bipedBones_B rightclick nameIndex do
+    (
+        local b = characterBones_B.items
+        b[nameIndex] = "~undefined~"
+        characterBones_B.items = b
+        mappingCheckState = false
+    )
+)
+
+createDialog rolAsaSkinBipedBuilder 655 648 style:#(#style_sysmenu, #style_toolwindow)
