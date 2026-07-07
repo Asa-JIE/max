@@ -1,0 +1,192 @@
+# -*- coding: utf-8 -*-
+import os
+import shutil
+import tempfile
+import maya.cmds as cmds
+import maya.mel as mel
+
+WIN = "CustomFrameFBXExport_UI"
+
+
+def ensure_fbx_plugin():
+    if not cmds.pluginInfo("fbxmaya", q=True, loaded=True):
+        cmds.loadPlugin("fbxmaya")
+
+
+def export_custom_range_temp_scene(output_fbx, start_frame, end_frame):
+    output_fbx = output_fbx.replace("\\", "/")
+
+    if end_frame < start_frame:
+        cmds.warning(u"End Frame 不能小于 Start Frame")
+        return
+
+    original_scene = cmds.file(q=True, sn=True)
+
+    if not original_scene:
+        cmds.warning(u"当前 Maya 文件还没有保存，请先保存场景再导出")
+        return
+
+    if cmds.file(q=True, modified=True):
+        cmds.warning(u"当前场景有未保存修改，请先保存后再导出")
+        return
+
+    sel = cmds.ls(sl=True, long=True)
+    if not sel:
+        cmds.warning(u"请先选择要导出的骨骼或模型")
+        return
+
+    ensure_fbx_plugin()
+
+    temp_dir = tempfile.mkdtemp(prefix="maya_clip_export_")
+    ext = os.path.splitext(original_scene)[1]
+    temp_scene = os.path.join(temp_dir, "temp_export_scene" + ext).replace("\\", "/")
+
+    try:
+        # 复制当前场景到临时文件，不影响原文件
+        shutil.copy2(original_scene, temp_scene)
+
+        # 打开临时场景
+        cmds.file(temp_scene, open=True, force=True)
+
+        # 恢复选择
+        cmds.select(sel, r=True)
+
+        # 设置原始截取范围
+        cmds.playbackOptions(
+            minTime=start_frame,
+            maxTime=end_frame,
+            animationStartTime=start_frame,
+            animationEndTime=end_frame
+        )
+        cmds.currentTime(start_frame)
+
+        # 删除 Start 前面的 Key
+        cmds.cutKey(
+            sel,
+            time=(-999999, start_frame - 1),
+            clear=True,
+            hierarchy="below"
+        )
+
+        # 删除 End 后面的 Key
+        cmds.cutKey(
+            sel,
+            time=(end_frame + 1, 999999),
+            clear=True,
+            hierarchy="below"
+        )
+
+        # 把剩余动画平移到 0 帧开始
+        cmds.keyframe(
+            sel,
+            e=True,
+            relative=True,
+            timeChange=-start_frame,
+            hierarchy="below"
+        )
+
+        new_start = 0
+        new_end = end_frame - start_frame
+
+        cmds.playbackOptions(
+            minTime=new_start,
+            maxTime=new_end,
+            animationStartTime=new_start,
+            animationEndTime=new_end
+        )
+        cmds.currentTime(new_start)
+
+        # FBX 导出设置
+        mel.eval('FBXResetExport;')
+        mel.eval('FBXExportBakeComplexAnimation -v true;')
+        mel.eval('FBXExportBakeComplexStart -v %d;' % new_start)
+        mel.eval('FBXExportBakeComplexEnd -v %d;' % new_end)
+        mel.eval('FBXExportBakeComplexStep -v 1;')
+
+        mel.eval('FBXExportSkins -v true;')
+        mel.eval('FBXExportShapes -v true;')
+        mel.eval('FBXExportConstraints -v false;')
+        mel.eval('FBXExportInputConnections -v false;')
+
+        # 只导出选中对象
+        mel.eval('FBXExport -f "%s" -s;' % output_fbx)
+
+        print(u"[OK] FBX导出完成: %s" % output_fbx)
+        print(u"[OK] 原始帧范围: %s - %s" % (start_frame, end_frame))
+        print(u"[OK] 导出帧范围: %s - %s" % (new_start, new_end))
+
+    finally:
+        # 回到原始场景
+        cmds.file(original_scene, open=True, force=True)
+
+        # 清理临时文件夹
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+
+
+def pick_output_file(*args):
+    path = cmds.fileDialog2(
+        fileMode=0,
+        caption=u"选择FBX输出路径",
+        fileFilter="FBX Files (*.fbx)"
+    )
+    if path:
+        out_path = path[0]
+        if not out_path.lower().endswith(".fbx"):
+            out_path += ".fbx"
+        cmds.textFieldButtonGrp("fbxOutputPath", e=True, text=out_path)
+
+
+def run_export(*args):
+    output_fbx = cmds.textFieldButtonGrp("fbxOutputPath", q=True, text=True)
+    start_frame = cmds.intFieldGrp("frameRangeGrp", q=True, value1=True)
+    end_frame = cmds.intFieldGrp("frameRangeGrp", q=True, value2=True)
+
+    if not output_fbx:
+        cmds.warning(u"请先选择FBX输出路径")
+        return
+
+    export_custom_range_temp_scene(
+        output_fbx,
+        start_frame,
+        end_frame
+    )
+
+
+def show_ui():
+    if cmds.window(WIN, exists=True):
+        cmds.deleteUI(WIN)
+
+    cmds.window(WIN, title=u"自定义帧范围 FBX 导出", widthHeight=(480, 170))
+    cmds.columnLayout(adjustableColumn=True, rowSpacing=8)
+
+    cmds.textFieldButtonGrp(
+        "fbxOutputPath",
+        label=u"输出FBX",
+        buttonLabel=u"选择",
+        text="",
+        columnWidth3=(80, 320, 60),
+        buttonCommand=pick_output_file
+    )
+
+    cmds.intFieldGrp(
+        "frameRangeGrp",
+        numberOfFields=2,
+        label=u"帧范围",
+        value1=int(cmds.playbackOptions(q=True, minTime=True)),
+        value2=int(cmds.playbackOptions(q=True, maxTime=True)),
+        columnWidth3=(80, 90, 90)
+    )
+
+    cmds.button(
+        label=u"导出选中FBX",
+        height=40,
+        command=run_export
+    )
+
+    cmds.showWindow(WIN)
+
+
+show_ui()
